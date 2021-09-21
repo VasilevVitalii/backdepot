@@ -96,7 +96,7 @@ export function go_check(db: lib.IApp, idx: number, callback_rows: {action: "ins
                     if (row.action === 'delete' && p1.path === p2.path && p1.file === p2.file) {
                         row.rows.splice(i ,1)
                         check_row.rows.splice(j, 1)
-                    } else if (row.action === 'insert' && p1.path === p2.path && (p1.file === p2.file || (p1.file.length > 20 && p2.file.length === 0))) {
+                    } else if (row.action === 'insert' && p1.path === p2.path && (p1.file === p2.file || (p1.file?.length > 20 && p2.file?.length === 0))) {
                         if (row.state === 'person' && PersonCompare(p1.data as TypePerson, p2.data as TypePerson)) {
                             row.rows.splice(i ,1)
                             check_row.rows.splice(j, 1)

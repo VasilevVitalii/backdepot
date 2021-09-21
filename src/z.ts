@@ -99,7 +99,7 @@ export function hash(s: string): string {
 }
 
 export function to_string(val: any): string {
-    if (!vvs.isEmpty(val)) return ''
+    if (vvs.isEmpty(val)) return ''
     const tf = typeof val
     if (tf === 'string') return val as string
     if (tf === 'boolean') {

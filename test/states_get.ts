@@ -29,9 +29,6 @@ export function get (db: lib.IApp, params: TypeFunctionParam, callback: (error: 
                 return
             }
 
-            console.log(params.func)
-            console.log(params.func, check_persons, fnd_persons)
-
             for (let i = check_persons.length - 1; i >= 0; i --) {
                 for (let j = fnd_persons.rows.length - 1; j >= 0; j --) {
                     const check = check_persons[i]
