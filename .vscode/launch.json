@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/build.post.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node"
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "sandbox",
@@ -34,7 +43,8 @@
                 "!**/node_modules/**"
             ],
             "program": "${workspaceFolder}/test/index.ts",
-            "protocol": "inspector"
+            "protocol": "inspector",
+            "preLaunchTask": "build"
         }
     ]
 }

@@ -74,15 +74,18 @@ export function go_send(db: lib.IApp, idx: number) {
 export function go_check(db: lib.IApp, idx: number, callback_rows: {action: "insert" | "delete", state: string, rows: lib.TypeStateRow[]}[], callback_set_error: Error, callback: () => void) {
     const test = tests[idx]
 
-    const check_callback_rows = test.check_callback_rows || test.sets.map(m => { return {
-        state: m.state,
-        action: m.action,
-        rows: m.rows.map(mm => { return {
-            path: vvs.toString(mm.path, ''),
-            file: vvs.toString(mm.file, ''),
-            data: mm.data
-        }}) as lib.TypeStateRow[]
-    }})
+    const check_callback_rows = test.check_callback_rows || test.sets.map(m => {
+        const rows = []
+        m.rows.forEach(row => {
+            rows.push(row)
+        })
+
+        return {
+            state: m.state,
+            action: m.action,
+            rows: rows //as lib.TypeStateRow[]
+        }
+    })
 
     callback_rows.forEach(row => {
         check_callback_rows.filter(f => f.action === row.action && f.state === row.state).forEach(check_row => {

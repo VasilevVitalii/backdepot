@@ -103,6 +103,7 @@ if (pp) {
                         timer_wait_watcher = setTimeout(tick, 500)
                         return
                     }
+
                     channel.forEach((channel_state, idx1) => {
                         channel_state.rows.forEach((channel_row, idx2) => {
                             set.rows.push({
@@ -116,6 +117,7 @@ if (pp) {
                             })
                         })
                     })
+
                     const need_delete = set.rows.filter(f => f.action === 'delete').map(m => { return {rkey: m.rkey, state: m.state, full_file_name: '', path: m.path, file: m.file, error: undefined as any as Error} })
                     need_delete.forEach(item => {
                         if (vvs.isEmptyString(item.file)) {
@@ -164,7 +166,7 @@ if (pp) {
             }
         }
     })
-
+    
     env.parent.states.forEach(state_env => {
         try {
             env.states.push( new State(
