@@ -77,7 +77,11 @@ export function go_check(db: lib.IApp, idx: number, callback_rows: {action: "ins
     const check_callback_rows = test.check_callback_rows || test.sets.map(m => {
         const rows = []
         m.rows.forEach(row => {
-            rows.push(row)
+            rows.push({
+                path: row.path || '',
+                file: row.file || '',
+                data: row['data']
+            })
         })
 
         return {

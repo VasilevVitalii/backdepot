@@ -90,7 +90,7 @@ if (pp) {
                         action: m.action,
                         rows: m.rows,
                     }
-                }).filter(f => f.state)
+                })
                 const no_state = channel.find(f => !f.state)
                 if (no_state) {
                     set.error = new Error(`no find state with name "${no_state.state_name}"`)
