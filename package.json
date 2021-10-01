@@ -1,10 +1,10 @@
 {
     "name": "backdepot",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "description": "backend storage",
-    "main": "dist/index.js",
+    "main": "dist/src/index.js",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc --build --pretty && node build.post.js",
         "test": "node ./dist/test/index.js"
     },
     "repository": {
@@ -24,6 +24,7 @@
         "chokidar": "^3.5.2",
         "crypto-js": "^4.1.1",
         "fs-extra": "^10.0.0",
+        "vv-filestream": "0.0.2",
         "vv-shared": "^5.0.4"
     },
     "devDependencies": {

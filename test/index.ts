@@ -14,7 +14,7 @@ const path_log1 = path.resolve(path_data,  'log1')
 const path_log2 = path.resolve(path_data,  'log2')
 
 const env = {
-    exit_after_all_test: false,
+    exit_after_all_test: true,
     on_state_complete_count: 0,
     global_error: undefined as any as Error,
     //set_tests: [] as {id: number, key: string}[],

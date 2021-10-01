@@ -35,7 +35,7 @@
             ],
             "program": "${workspaceFolder}/test/index.ts",
             "protocol": "inspector",
-            "preLaunchTask": "build"
+            "preLaunchTask": "npm: build"
         }
     ]
 }
