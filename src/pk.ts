@@ -1,6 +1,6 @@
-import * as vvs from 'vv-shared'
+import * as vv from 'vv-common'
 import * as path from 'path'
-import { dir } from './z';
+import { Dir } from './z';
 
 export class Pk {
     readonly path: string;
@@ -12,12 +12,12 @@ export class Pk {
     }
 
     equal (pk: Pk): boolean {
-        if (vvs.isEmpty(pk)) return false
-        return vvs.equal(this.path, pk.path) && vvs.equal(this.file, pk.file)
+        if (vv.isEmpty(pk)) return false
+        return vv.equal(this.path, pk.path) && vv.equal(this.file, pk.file)
     }
 }
 
-export function FromFile(full_file_name: string, root_path: string): Pk {
-    const p = path.parse(dir(full_file_name))
-    return new Pk(p.dir.substring(root_path.length + 1, p.dir.length), p.base)
+export function FromFile(fullFileName: string, rootPath: string): Pk {
+    const p = path.parse(Dir(fullFileName))
+    return new Pk(p.dir.substring(rootPath.length + 1, p.dir.length), p.base)
 }

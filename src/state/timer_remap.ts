@@ -1,25 +1,25 @@
-import * as vvs from 'vv-shared'
+import * as vv from 'vv-common'
 import { State } from "."
-import { reindex } from './reindex'
-import { rescan } from './rescan'
+import { Reindex } from './reindex'
+import { Rescan } from './rescan'
 
-export function timer_remap (state: State) {
+export function TimerRemap (state: State) {
     let timer = setTimeout(function tick() {
-        if (!vvs.isEmpty(state.work_info.time_remap)) {
+        if (!vv.isEmpty(state.workInfo.time_remap)) {
             timer = setTimeout(tick, 10000)
             return
         }
-        reindex(state, success => {
-            if (!success) {
+        Reindex(state, isSuccess => {
+            if (!isSuccess) {
                 timer = setTimeout(tick, 10000)
                 return
             }
-            rescan(state, success => {
-                if (!success) {
+            Rescan(state, isSuccess => {
+                if (!isSuccess) {
                     timer = setTimeout(tick, 10000)
                     return
                 }
-                state.work_info.time_remap = new Date()
+                state.workInfo.time_remap = new Date()
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 timer = setTimeout(tick, 10000)
             })

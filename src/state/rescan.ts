@@ -2,64 +2,64 @@ import * as path from 'path'
 import { FsStat } from '../fsstat'
 import { State } from "."
 import { FromFile} from '../pk'
-import * as vvs from 'vv-shared'
-import { TypeRow as Row_Data} from '../sqlite/table.data'
+import * as vv from 'vv-common'
+import { TRow as Row_Data} from '../sqlite/table.data'
 
-export function rescan(state: State, callback: (success: boolean) => void) {
-    state.callback_debug(`map rescan: begin`)
-    vvs.readdir(state.path_data, {mode: 'files'}, (error, raw_files) => {
+export function Rescan(state: State, callback: (success: boolean) => void) {
+    state.callbackDebug(`map rescan: begin`)
+    vv.dir(state.pathData, {mode: 'files'}, (error, rawFiles) => {
         if (error) {
-            state.callback_error(`map rescan: in scan dir "${error.message}"`)
+            state.callbackError(`map rescan: in scan dir "${error.message}"`)
             callback(false)
             return
         }
-        const files = raw_files
+        const files = rawFiles
             .map(m => {
                 return {
-                    pk: FromFile(path.join(m.path, m.file), state.path_data),
+                    pk: FromFile(path.join(m.path, m.file), state.pathData),
                     data: undefined,
                     fsstat: new FsStat(m.fsstat.mtimeMs * 10000, m.fsstat.ctimeMs * 10000, m.fsstat.birthtimeMs * 10000, m.fsstat.size)
                 }
             }) as Row_Data[]
-        state.callback_debug(`map rescan: find ${files.length} file(s)`)
+        state.callbackDebug(`map rescan: find ${files.length} file(s)`)
 
-        state.sqlite.orm.data.select(['path', 'file', 'fsstat_mtimeMs', 'fsstat_ctimeMs', 'fsstat_birthtimeMs', 'fsstat_size'], undefined, (error, maps) => {
+        state.sqlite.orm.data.select(['path', 'file', 'fsstatMtimeMs', 'fsstatCtimeMs', 'fsstatBirthtimeMs', 'fsstatSize'], undefined, (error, maps) => {
             if (error) {
-                state.callback_error(`map rescan: in scan map "${error.message}"`)
+                state.callbackError(`map rescan: in scan map "${error.message}"`)
                 callback(false)
                 return
             }
-            state.callback_debug(`map rescan: find ${maps.length} maps(s)`)
+            state.callbackDebug(`map rescan: find ${maps.length} maps(s)`)
 
-            const maps_need_delete =  maps.filter(f => files.every(ff => !f.pk.equal(ff.pk)))
-            state.callback_debug(`map rescan: check for delete ${maps_need_delete.length} maps(s)`)
-            const maps_need_update = files.filter(f => maps.some(ff => f.pk.equal(ff.pk) && !f.fsstat.equal(ff.fsstat)))
-            state.callback_debug(`map rescan: check for update ${maps_need_update.length} maps(s)`)
-            const maps_need_insert = files.filter(f => maps.every(ff => !f.pk.equal(ff.pk)))
-            state.callback_debug(`map rescan: check for insert ${maps_need_insert.length} maps(s)`)
+            const mapsNeedDelete =  maps.filter(f => files.every(ff => !f.pk.equal(ff.pk)))
+            state.callbackDebug(`map rescan: check for delete ${mapsNeedDelete.length} maps(s)`)
+            const mapsNeedUpdate = files.filter(f => maps.some(ff => f.pk.equal(ff.pk) && !f.fsstat.equal(ff.fsstat)))
+            state.callbackDebug(`map rescan: check for update ${mapsNeedUpdate.length} maps(s)`)
+            const mapsNeedInsert = files.filter(f => maps.every(ff => !f.pk.equal(ff.pk)))
+            state.callbackDebug(`map rescan: check for insert ${mapsNeedInsert.length} maps(s)`)
 
-            state.sqlite.exec_data_delete(maps_need_delete.map(m => { return m.pk }), error => {
+            state.sqlite.execDataDelete(mapsNeedDelete.map(m => { return m.pk }), error => {
                 if (error) {
-                    state.callback_error(`map rescan: in delete checked map(s) "${error.message}"`)
+                    state.callbackError(`map rescan: in delete checked map(s) "${error.message}"`)
                     callback(false)
                     return
                 }
-                state.callback_debug(`map rescan: checked map(s) deleted`)
+                state.callbackDebug(`map rescan: checked map(s) deleted`)
 
-                state.upsert(false, maps_need_update.map(m => { return {full_file_name: path.join(state.path_data, m.pk.path, m.pk.file), fsstat: m.fsstat} }), success => {
-                    if (!success) {
+                state.upsert(false, mapsNeedUpdate.map(m => { return {fullFileName: path.join(state.pathData, m.pk.path, m.pk.file), fsstat: m.fsstat} }), isSuccess => {
+                    if (!isSuccess) {
                         callback(false)
                         return
                     }
-                    state.callback_debug(`map rescan: checked map(s) updated`)
+                    state.callbackDebug(`map rescan: checked map(s) updated`)
 
-                    state.upsert(false, maps_need_insert.map(m => { return {full_file_name: path.join(state.path_data, m.pk.path, m.pk.file), fsstat: m.fsstat} }), success => {
-                        if (!success) {
+                    state.upsert(false, mapsNeedInsert.map(m => { return {fullFileName: path.join(state.pathData, m.pk.path, m.pk.file), fsstat: m.fsstat} }), isSuccess => {
+                        if (!isSuccess) {
                             callback(false)
                             return
                         }
-                        state.callback_debug(`map rescan: checked map(s) inserted`)
-                        state.callback_debug(`map rescan: end`)
+                        state.callbackDebug(`map rescan: checked map(s) inserted`)
+                        state.callbackDebug(`map rescan: end`)
                         callback(true)
                     })
                 })

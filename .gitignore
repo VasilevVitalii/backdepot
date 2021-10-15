@@ -1,4 +1,4 @@
 node_modules
-sandbox-state
 dist
-test/test-states
+test/*.json
+test/log

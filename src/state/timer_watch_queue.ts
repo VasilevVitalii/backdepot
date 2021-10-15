@@ -1,50 +1,50 @@
 import { State } from "."
 import { FromFile } from '../pk'
 
-export function timer_watch_queue (state: State) {
+export function TimerWatchQueue (state: State) {
 
     let timer = setTimeout(function tick() {
-        const watch_queue_state = state.watch_queue_state()
+        const watchQueueState = state.watchQueueState()
 
-        if (watch_queue_state === 'unwanted') {
-            const watch_queue = state.watch_queue.splice(0, state.watch_queue.length)
-            if (watch_queue.length > 0) {
-                state.callback_debug (`timer watch queue: watch_queue_state = "unwanted", ignore ${watch_queue.length} change(s)`)
+        if (watchQueueState === 'unwanted') {
+            const watchQueue = state.watchQueue.splice(0, state.watchQueue.length)
+            if (watchQueue.length > 0) {
+                state.callbackDebug (`timer watch queue: watch_queue_state = "unwanted", ignore ${watchQueue.length} change(s)`)
             }
             timer = setTimeout(tick, 1000)
             return
         }
 
-        if (watch_queue_state === 'pause') {
+        if (watchQueueState === 'pause') {
             timer = setTimeout(tick, 500)
             return
         }
 
-        if (watch_queue_state === 'work') {
-            const watch_queue = state.watch_queue.splice(0, state.watch_queue.length)
-            if (watch_queue.length <= 0) {
+        if (watchQueueState === 'work') {
+            const watchQueue = state.watchQueue.splice(0, state.watchQueue.length)
+            if (watchQueue.length <= 0) {
                 timer = setTimeout(tick, 500)
                 return
             }
 
-            const for_delete = watch_queue.filter(f => f.action === 'unlink')
-            const for_delete_pk = for_delete.map(m => { return FromFile(m.full_file_name, state.path_data) })
-            state.sqlite.exec_data_delete(for_delete_pk, error => {
+            const forDelete = watchQueue.filter(f => f.action === 'unlink')
+            const forDeletePk = forDelete.map(m => { return FromFile(m.fullFileName, state.pathData) })
+            state.sqlite.execDataDelete(forDeletePk, error => {
                 if (error) {
-                    state.callback_error(`queue delete: delete map(s) "${error.message}"`)
-                } else if (for_delete_pk.length > 0) {
-                    state.callback_change_delete(for_delete_pk)
+                    state.callbackError(`queue delete: delete map(s) "${error.message}"`)
+                } else if (forDeletePk.length > 0) {
+                    state.callbackChangeDelete(forDeletePk)
                 }
-                if (for_delete.length > 10) {
-                    state.callback_debug(`queue delete: delete ${for_delete.length} files`)
+                if (forDelete.length > 10) {
+                    state.callbackDebug(`queue delete: delete ${forDelete.length} files`)
                 } else {
-                    for_delete.forEach(item => {
-                        state.callback_debug(`queue delete: delete file ${item.full_file_name}`)
+                    forDelete.forEach(item => {
+                        state.callbackDebug(`queue delete: delete file ${item.fullFileName}`)
                     })
                 }
-                const for_upsert = watch_queue.filter(f => f.action === 'add' || f.action === 'change')
+                const forUpsert = watchQueue.filter(f => f.action === 'add' || f.action === 'change')
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                state.upsert(true, for_upsert, success => {
+                state.upsert(true, forUpsert, isSuccess => {
                     timer = setTimeout(tick, 500)
                 })
             })

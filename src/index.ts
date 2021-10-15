@@ -2,116 +2,109 @@ import path from 'path'
 import worker_threads from 'worker_threads'
 
 import * as fs from 'fs-extra'
-import * as vvs from 'vv-shared'
-import { TypeOptions, Env, TypeChannelWorkerFrom, TypeChannelWorkerTo, TypeChannelStateFilterObtain, TypeChannelStateFilterQuery, TypeStateRowChange, TypeSetCallback, TypeStateRow }  from './index.env'
-export type {TypeChannelStateFilterObtain, TypeChannelStateFilterQuery, TypeStateRow, TypeStateRowChange, TypeSetCallback}
+import * as vv from 'vv-common'
+import { TOptions, Env, TChannelWorkerFrom, TChannelWorkerTo, TChannelStateFilterObtain, TChannelStateFilterQuery, TStateRowChange, TSetCallback, TStateRow }  from './index.env'
+export type {TChannelStateFilterObtain as TypeChannelStateFilterObtain, TChannelStateFilterQuery as TypeChannelStateFilterQuery, TStateRow as TypeStateRow, TStateRowChange as TypeStateRowChange, TSetCallback as TypeSetCallback}
 
-type CallbackFunctionOnError =  (error: string) => void
-type CallbackFunctionOnDebug =  (debug: string) => void
-type CallbackFunctionOnTrace =  (trace: string) => void
-type CallbackFunctionOnStateComplete =  () => void
-type CallbackFunctionOnStateChange =  (rows: {action: 'insert' | 'delete', state: string, rows: TypeStateRow[]}[], sets: TypeSetCallback[]) => void
-type CallbackFunctionGet = (error: Error, rows: {state: string, rows: TypeStateRow[]}[]) => void
+type TCallbackFunctionOnError =  (error: string) => void
+type TCallbackFunctionOnDebug =  (debug: string) => void
+type TCallbackFunctionOnTrace =  (trace: string) => void
+type TCallbackFunctionOnStateComplete =  () => void
+type TCallbackFunctionOnStateChange =  (rows: {action: 'insert' | 'delete', state: string, rows: TStateRow[]}[], sets: TSetCallback[]) => void
+type TCallbackFunctionGet = (error: Error, rows: {state: string, rows: TStateRow[]}[]) => void
 
 export interface IApp {
     /** start library */
     start(): void,
     get: {
         /** load data from states by simple filters */
-        obtain(filter: TypeChannelStateFilterObtain[], callback: CallbackFunctionGet): void,
+        obtain(filter: TChannelStateFilterObtain[], callback: TCallbackFunctionGet): void,
         /** load data from states with injected sql in filter */
-        query(filter: TypeChannelStateFilterQuery[], callback: CallbackFunctionGet): void,
+        query(filter: TChannelStateFilterQuery[], callback: TCallbackFunctionGet): void,
     },
-    set(sets: TypeStateRowChange[], callback: (key: string) => void): void,
+    set(sets: TStateRowChange[], callback: (key: string) => void): void,
     callback: {
         /** for getting errors that occur when the library is running */
         //on_error: (FunctionOnError) => void,
-        on_error: (callback: CallbackFunctionOnError) => void,
+        onError: (callback: TCallbackFunctionOnError) => void,
         /** for getting debug message that occur when the library is running */
-        on_debug: (callback: CallbackFunctionOnDebug) => void
+        onDebug: (callback: TCallbackFunctionOnDebug) => void
         /** for trace debug message that occur when the library is running */
-        on_trace: (callback: CallbackFunctionOnTrace) => void
+        onTrace: (callback: TCallbackFunctionOnTrace) => void
         /** for get actual state when lib started or rescan dirs after error watch dir */
-        on_state_complete: (callback: CallbackFunctionOnStateComplete) => void
+        onStateComplete: (callback: TCallbackFunctionOnStateComplete) => void
         /** when state changed (indesrt or delete) */
-        on_state_change: (callback: CallbackFunctionOnStateChange) => void
+        onStateChange: (callback: TCallbackFunctionOnStateChange) => void
     }
 }
 
-export function create(options: TypeOptions, callback?: (error: Error | undefined) => void): IApp {
+export function Create(options: TOptions, callback?: (error: Error | undefined) => void): IApp {
     try {
-        let started = false
+        let isStarted = false
         const env = new Env(options)
 
-        let callback_error = undefined as any as CallbackFunctionOnError
-        let callback_debug = undefined as any as CallbackFunctionOnDebug
-        let callback_trace = undefined as any as CallbackFunctionOnTrace
-        let callback_state_complete = undefined as any as CallbackFunctionOnStateComplete
-        let callback_state_change = undefined as any as CallbackFunctionOnStateChange
+        let callbackError = undefined as any as TCallbackFunctionOnError
+        let callbackDebug = undefined as any as TCallbackFunctionOnDebug
+        let callbackTrace = undefined as any as TCallbackFunctionOnTrace
+        let callbackStateComplete = undefined as any as TCallbackFunctionOnStateComplete
+        let callbackStateChange = undefined as any as TCallbackFunctionOnStateChange
         let worker: any
-        const channel_queue_load_states = [] as {key: string, callback: CallbackFunctionGet}[]
+        const channelQueueLoadStates = [] as {key: string, callback: TCallbackFunctionGet}[]
 
         const app = {
             start: () => {
-                if (started) return
-                started = true
+                if (isStarted) return
+                isStarted = true
 
-                const all_dirs = [
-                    env.path_data,
-                    env.path_map,
-                    ...env.states.map(m => { return  m.path_data }),
-                    ...env.states.map(m => { return  m.path_map }),
+                const allDirs = [
+                    env.pathData,
+                    env.pathMap,
+                    ...env.states.map(m => { return  m.pathData }),
+                    ...env.states.map(m => { return  m.pathMap }),
                 ]
-                all_dirs.forEach(dir => {
+                allDirs.filter(f => f !== 'MEMORY').forEach(dir => {
                     fs.ensureDirSync(dir)
                 })
 
-                worker = new worker_threads.Worker(path.join(__dirname, 'worker.import.js'), {workerData: env})
-                worker.on('message', (worker_info: TypeChannelWorkerFrom) => {
-                    if (worker_info.type === 'message_error' && callback_error) {
-                        callback_error(worker_info.error)
-                    } else if (worker_info.type === 'message_debug' && callback_debug) {
-                        callback_debug(worker_info.debug)
-                    } else if (worker_info.type === 'message_trace' && callback_trace) {
-                        callback_trace(worker_info.trace)
-                    } else if (worker_info.type === 'state_complete' && callback_state_complete ) {
-                        callback_state_complete()
-                    } else if (worker_info.type === 'get.obtain' || worker_info.type === 'get.query') {
-                        const channel_queue_idx = channel_queue_load_states.findIndex(f => f.key === worker_info.key)
-                        if (channel_queue_idx < 0) return
-                        const channel_item = channel_queue_load_states.splice(channel_queue_idx, 1)
-                        if (!channel_item || channel_item.length <= 0) return
-                        channel_item[0].callback(worker_info.error, worker_info.rows)
-                    } else if (worker_info.type === 'state_change' && callback_state_change ) {
-                        callback_state_change(worker_info.rows, worker_info.sets)
+                worker = new worker_threads.Worker(path.join(__dirname, 'worker.js'), {workerData: env})
+                worker.on('message', (workerInfo: TChannelWorkerFrom) => {
+                    if (workerInfo.type === 'message_error' && callbackError) {
+                        callbackError(workerInfo.error)
+                    } else if (workerInfo.type === 'message_debug' && callbackDebug) {
+                        callbackDebug(workerInfo.debug)
+                    } else if (workerInfo.type === 'message_trace' && callbackTrace) {
+                        callbackTrace(workerInfo.trace)
+                    } else if (workerInfo.type === 'state_complete' && callbackStateComplete ) {
+                        callbackStateComplete()
+                    } else if (workerInfo.type === 'get.obtain' || workerInfo.type === 'get.query') {
+                        const channelQueueIdx = channelQueueLoadStates.findIndex(f => f.key === workerInfo.key)
+                        if (channelQueueIdx < 0) return
+                        const channelItem = channelQueueLoadStates.splice(channelQueueIdx, 1)
+                        if (!channelItem || channelItem.length <= 0) return
+                        channelItem[0].callback(workerInfo.error, workerInfo.rows)
+                    } else if (workerInfo.type === 'state_change' && callbackStateChange ) {
+                        callbackStateChange(workerInfo.rows, workerInfo.sets)
                     }
-                    // else if (worker_info.type === 'set') {
-                    //     const channel_queue_idx = channel_queue_save_states.findIndex(f => f.key === worker_info.key)
-                    //     if (channel_queue_idx < 0) return
-                    //     const channel_item = channel_queue_save_states.splice(channel_queue_idx, 1)
-                    //     if (!channel_item || channel_item.length <= 0) return
-                    //     channel_item[0].callback(worker_info.error)
-                    // }
                 })
             },
             get: {
-                obtain: (filter: TypeChannelStateFilterObtain[], callback: CallbackFunctionGet) => {
+                obtain: (filter: TChannelStateFilterObtain[], callback: TCallbackFunctionGet) => {
                     if (!worker || !filter || filter.length <= 0) {
                         callback(new Error('worker is not started or filter is empty'), [])
                         return
                     }
 
-                    const key = `obtain.${vvs.guid()}${vvs.guid()}${vvs.formatDate(new Date(), 126)}`
-                    channel_queue_load_states.push({key: key, callback: callback})
+                    const key = `obtain.${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), '126')}`
+                    channelQueueLoadStates.push({key: key, callback: callback})
 
                     const message = {
                         type: 'get.obtain',
                         key: key,
                         filter: filter
-                    } as TypeChannelWorkerTo
+                    } as TChannelWorkerTo
                     worker.postMessage(message)
                 },
-                query: (filter: TypeChannelStateFilterQuery[], callback: CallbackFunctionGet) => {
+                query: (filter: TChannelStateFilterQuery[], callback: TCallbackFunctionGet) => {
                     if (!callback) {
                         return
                     }
@@ -120,54 +113,54 @@ export function create(options: TypeOptions, callback?: (error: Error | undefine
                         return
                     }
 
-                    const key = `query.${vvs.guid()}${vvs.guid()}${vvs.formatDate(new Date(), 126)}`
-                    channel_queue_load_states.push({key: key, callback: callback})
+                    const key = `query.${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), '126')}`
+                    channelQueueLoadStates.push({key: key, callback: callback})
 
                     const message = {
                         type: 'get.query',
                         key: key,
                         filter: filter
-                    } as TypeChannelWorkerTo
+                    } as TChannelWorkerTo
                     worker.postMessage(message)
                 },
             },
-            set: (sets: TypeStateRowChange[], callback: (key: string | undefined) => void) => {
+            set: (sets: TStateRowChange[], callback: (key: string | undefined) => void) => {
                 if (!worker || !sets || sets.length <= 0) {
                     if (callback) callback(undefined)
                     return
                 }
 
-                const key = vvs.replaceAll(`${vvs.guid()}${vvs.guid()}${vvs.formatDate(new Date(), 10126)}`, '-', '')
+                const key = `${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), 'yyyymmddhhmissmsec')}`
 
                 const message = {
                     type: 'set',
                     key: key,
                     sets: sets
-                } as TypeChannelWorkerTo
+                } as TChannelWorkerTo
                 worker.postMessage(message)
 
                 callback(key)
             },
             callback: {
-                on_error (callback): void {
-                    env.callback.error = true
-                    callback_error = callback
+                onError (callback): void {
+                    env.callback.allowError = true
+                    callbackError = callback
                 },
-                on_debug (callback): void {
-                    env.callback.debug = true
-                    callback_debug = callback
+                onDebug (callback): void {
+                    env.callback.allowDebug = true
+                    callbackDebug = callback
                 },
-                on_trace (callback): void {
-                    env.callback.trace = true
-                    callback_trace = callback
+                onTrace (callback): void {
+                    env.callback.allowTrace = true
+                    callbackTrace = callback
                 },
-                on_state_complete (callback): void {
-                    env.callback.state_complete = true
-                    callback_state_complete = callback
+                onStateComplete (callback): void {
+                    env.callback.isStateComplete = true
+                    callbackStateComplete = callback
                 },
-                on_state_change (callback): void {
-                    env.callback.state_change = true
-                    callback_state_change = callback
+                onStateChange (callback): void {
+                    env.callback.isStateChange = true
+                    callbackStateChange = callback
                 }
             }
         } as IApp
@@ -191,11 +184,11 @@ export function create(options: TypeOptions, callback?: (error: Error | undefine
             },
             set: () => {},
             callback: {
-                on_error: () => {},
-                on_debug: () => {},
-                on_trace: () => {},
-                on_state_complete: () => {},
-                on_state_change: () => {}
+                onError: () => {},
+                onDebug: () => {},
+                onTrace: () => {},
+                onStateComplete: () => {},
+                onStateChange: () => {}
             }
         }
     }

@@ -2,7 +2,7 @@
 
 const path = require('path')
 const fs = require('fs-extra')
-const vvs = require('vv-shared')
+const vv = require('vv-common')
 
 /**
  * @param {number} count
@@ -38,21 +38,21 @@ function generate_person(count) {
                 name: woman_names[Math.floor(Math.random() * woman_names_len)],
                 surname: surname
             },
-            some_prop0: vvs.guid(),
-            some_prop1: vvs.guid(),
-            some_prop2: vvs.guid(),
-            some_prop3: vvs.guid(),
-            some_prop4: vvs.guid(),
-            some_prop5: vvs.guid(),
-            some_prop6: vvs.guid(),
-            some_prop7: vvs.guid(),
-            some_prop8: vvs.guid(),
-            some_prop9: vvs.guid(),
-            fdm: vvs.formatDate(new Date(), 126)
+            some_prop0: vv.guid(),
+            some_prop1: vv.guid(),
+            some_prop2: vv.guid(),
+            some_prop3: vv.guid(),
+            some_prop4: vv.guid(),
+            some_prop5: vv.guid(),
+            some_prop6: vv.guid(),
+            some_prop7: vv.guid(),
+            some_prop8: vv.guid(),
+            some_prop9: vv.guid(),
+            fdm: vv.dateFormat(new Date(), '126')
         }
 
         const subpath = count <= 200 ? '' : Math.floor(i/100).toString()
-        if (!vvs.isEmptyString(subpath)) {
+        if (!vv.isEmpty(subpath)) {
             fs.ensureDirSync(path.join(p, subpath))
         }
         fs.writeFileSync(path.join(p, subpath, `${i}.json`), JSON.stringify(person, null, 4), {encoding: 'utf8'})

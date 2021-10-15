@@ -2,9 +2,9 @@ import { Database } from 'better-sqlite3'
 import * as core from './core'
 import { Pk } from '../pk'
 
-export type TypeField = ('path' | 'file' | 'prop' | 'value')
+export type TField = ('path' | 'file' | 'prop' | 'value')
 
-export type TypeRow = {
+export type TRow = {
     pk: Pk,
     prop: string,
     value: number
@@ -12,42 +12,42 @@ export type TypeRow = {
 
 export class TableData {
     readonly db: Database
-    readonly table_name: string
+    readonly tableName: string
 
     constructor(db: Database) {
         this.db = db
-        this.table_name = 'data_eav_number'
+        this.tableName = 'DataEavNumber'
     }
 
-    select (fields: TypeField[], filter: ({field: TypeField, value: string | number})[], callback: (error: Error | undefined, rows: TypeRow[]) => void): void  {
-        core.orm_select(this.db, this.table_name, fields, filter, (error, rows) => {
+    select (fields: TField[], filter: ({field: TField, value: string | number})[], callback: (error: Error | undefined, rows: TRow[]) => void): void  {
+        core.OrmSelect(this.db, this.tableName, fields, filter, (error, rows) => {
             callback(error, rows.map(m => {
                 return {
                     pk: new Pk(m['path'], m['file']),
                     prop: m['prop'],
                     value: m['value']
-                } as TypeRow
+                } as TRow
             }))
         })
     }
 
-    delete (filter_fields: TypeField[], filter_values: any[], callback: (error: Error | undefined) => void): void {
-        core.orm_delete(this.db, this.table_name, filter_fields, filter_values, callback)
+    delete (filterFields: TField[], filterValues: any[], callback: (error: Error | undefined) => void): void {
+        core.OrmDelete(this.db, this.tableName, filterFields, filterValues, callback)
     }
 
-    upsert (rows: TypeRow[], callback: (error: Error | undefined) => void): void {
+    upsert (rows: TRow[], callback: (error: Error | undefined) => void): void {
         if (rows.length <= 0) {
             callback(undefined)
             return
         }
         const query = [
-            `INSERT INTO "${this.table_name}" ("path", "file", "prop", "value")`,
+            `INSERT INTO "${this.tableName}" ("path", "file", "prop", "value")`,
             `VALUES (@path, @file, @prop, @value)`,
             `ON CONFLICT (path, file, prop) DO`,
             `UPDATE SET`,
             `"value"=excluded.value`,
         ].join(' ')
-        core.exec_prepared(this.db, query, rows.map(m => {
+        core.ExecPrepared(this.db, query, rows.map(m => {
             return {
                 path: m.pk.path,
                 file: m.pk.file,

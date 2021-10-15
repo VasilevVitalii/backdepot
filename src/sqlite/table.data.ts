@@ -3,9 +3,9 @@ import { FsStat } from '../fsstat'
 import { Pk } from '../pk'
 import * as core from './core'
 
-export type TypeField = ('path' | 'file' | 'data' | 'fsstat_size' | 'fsstat_mtimeMs' | 'fsstat_ctimeMs' | 'fsstat_birthtimeMs')
+export type TField = ('path' | 'file' | 'data' | 'fsstatSize' | 'fsstatMtimeMs' | 'fsstatCtimeMs' | 'fsstatBirthtimeMs')
 
-export type TypeRow = {
+export type TRow = {
     pk: Pk,
     fsstat: FsStat,
     data: string | undefined
@@ -13,55 +13,55 @@ export type TypeRow = {
 
 export class TableData {
     readonly db: Database
-    readonly table_name: string
+    readonly tableName: string
 
     constructor(db: Database) {
         this.db = db
-        this.table_name = 'data'
+        this.tableName = 'Data'
     }
 
-    select (fields: TypeField[], filter: ({field: TypeField, value: string | number})[] | undefined, callback: (error: Error | undefined, rows: TypeRow[]) => void): void  {
-        core.orm_select(this.db, this.table_name, fields, filter, (error, rows) => {
+    select (fields: TField[], filter: ({field: TField, value: string | number})[] | undefined, callback: (error: Error | undefined, rows: TRow[]) => void): void  {
+        core.OrmSelect(this.db, this.tableName, fields, filter, (error, rows) => {
             callback(error, rows.map(m => {
                 return {
                     pk: new Pk(m['path'], m['file']),
-                    fsstat: new FsStat(m['fsstat_mtimeMs'],m['fsstat_ctimeMs'],m['fsstat_birthtimeMs'],m['fsstat_size']),
+                    fsstat: new FsStat(m['fsstatMtimeMs'],m['fsstatCtimeMs'],m['fsstatBirthtimeMs'],m['fsstatSize']),
                     data: m['data']
-                } as TypeRow
+                } as TRow
             }))
         })
     }
 
-    delete (filter_fields: TypeField[], filter_values: any[], callback: (error: Error | undefined) => void): void {
-        core.orm_delete(this.db, this.table_name, filter_fields, filter_values, callback)
+    delete (filterFields: TField[], filterValues: any[], callback: (error: Error | undefined) => void): void {
+        core.OrmDelete(this.db, this.tableName, filterFields, filterValues, callback)
     }
 
-    upsert (rows: TypeRow[], callback: (error: Error | undefined) => void): void {
+    upsert (rows: TRow[], callback: (error: Error | undefined) => void): void {
         if (rows.length <= 0) {
             callback(undefined)
             return
         }
         const query = [
-            `INSERT INTO "${this.table_name}" ("path", "file", "data", "fsstat_size", "fsstat_mtimeMs", "fsstat_ctimeMs", "fsstat_birthtimeMs")`,
-            `VALUES (@path, @file, @data, @fsstat_size, @fsstat_mtimeMs, @fsstat_ctimeMs, @fsstat_birthtimeMs)`,
+            `INSERT INTO "${this.tableName}" ("path", "file", "data", "fsstatSize", "fsstatMtimeMs", "fsstatCtimeMs", "fsstatBirthtimeMs")`,
+            `VALUES (@path, @file, @data, @fsstatSize, @fsstatMtimeMs, @fsstatCtimeMs, @fsstatBirthtimeMs)`,
             `ON CONFLICT (path, file) DO`,
             `UPDATE SET`,
             `"data"=excluded.data,`,
-            `"fsstat_birthtimeMs"=excluded.fsstat_birthtimeMs,`,
-            `"fsstat_ctimeMs"=excluded.fsstat_ctimeMs,`,
-            `"fsstat_mtimeMs"=excluded.fsstat_mtimeMs,`,
-            `"fsstat_size"=excluded.fsstat_size,`,
-            `"fsstat_birthtimeMs"=excluded.fsstat_birthtimeMs`
+            `"fsstatBirthtimeMs"=excluded.fsstatBirthtimeMs,`,
+            `"fsstatCtimeMs"=excluded.fsstatCtimeMs,`,
+            `"fsstatMtimeMs"=excluded.fsstatMtimeMs,`,
+            `"fsstatSize"=excluded.fsstatSize,`,
+            `"fsstatBirthtimeMs"=excluded.fsstatBirthtimeMs`
         ].join(' ')
-        core.exec_prepared(this.db, query, rows.map(m => {
+        core.ExecPrepared(this.db, query, rows.map(m => {
             return {
                 path: m.pk.path,
                 file: m.pk.file,
                 data: m.data,
-                fsstat_size: m.fsstat.size,
-                fsstat_mtimeMs: m.fsstat.mtimeMs,
-                fsstat_ctimeMs: m.fsstat.ctimeMs,
-                fsstat_birthtimeMs: m.fsstat.birthtimeMs
+                fsstatSize: m.fsstat.size,
+                fsstatMtimeMs: m.fsstat.mtimeMs,
+                fsstatCtimeMs: m.fsstat.ctimeMs,
+                fsstatBirthtimeMs: m.fsstat.birthtimeMs
             }
         }), callback)
     }

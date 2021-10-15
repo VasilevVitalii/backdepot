@@ -1,15 +1,15 @@
-import * as vvs from 'vv-shared'
+import * as vv from 'vv-common'
 
-export type TypeData = 'string' | 'json'
-export type TypeDataShowcase = 'string' | 'native'
+export type TData = 'string' | 'json'
+export type TDataShowcase = 'string' | 'native'
 
 export class TypeDataHandler {
-    readonly typedata: TypeData
-    readonly typedata_showcase: TypeDataShowcase
+    readonly typedata: TData
+    readonly typedataShowcase: TDataShowcase
 
-    constructor(typedata: string | undefined, typedata_showcase: string | undefined) {
+    constructor(typedata: string | undefined, typedataShowcase: string | undefined) {
         this.typedata = typedata === 'string' || typedata === 'json' ? typedata : 'json'
-        this.typedata_showcase = typedata_showcase === 'string' || typedata_showcase === 'native' ? typedata_showcase : 'native'
+        this.typedataShowcase = typedataShowcase === 'string' || typedataShowcase === 'native' ? typedataShowcase : 'native'
     }
 
     ext(): string {
@@ -20,7 +20,7 @@ export class TypeDataHandler {
 
     savedata (data: string | any): string {
         try {
-            if (vvs.isEmpty(data)) return ''
+            if (vv.isEmpty(data)) return ''
             if (typeof data === 'string') return data
             if (typeof data === 'number') return data.toString()
             if (typeof data === 'boolean') return data ? 'true' : 'false'
@@ -32,7 +32,7 @@ export class TypeDataHandler {
 
     loaddata (data: string): any | undefined {
         try {
-            if (this.typedata_showcase === 'string') return data
+            if (this.typedataShowcase === 'string') return data
             if (this.typedata === 'string') return data
             if (this.typedata === 'json') return JSON.parse(data)
         } catch (error) {

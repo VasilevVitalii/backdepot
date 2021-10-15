@@ -1,4 +1,4 @@
-import * as vvs from 'vv-shared'
+import * as vv from 'vv-common'
 
 export class FsStat {
     readonly mtimeMs: number
@@ -14,7 +14,7 @@ export class FsStat {
     }
 
     equal (fsstat: FsStat): boolean {
-        if (vvs.isEmpty(fsstat)) return false
+        if (vv.isEmpty(fsstat)) return false
         return this.mtimeMs === fsstat.mtimeMs && this.ctimeMs === fsstat.ctimeMs && this.birthtimeMs === fsstat.birthtimeMs && this.size === fsstat.size
     }
 }

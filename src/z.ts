@@ -1,37 +1,45 @@
-import * as vvs from 'vv-shared'
+import * as vv from 'vv-common'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 import * as cryptojs from 'crypto-js'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const SHA512 = require("crypto-js/sha512")
 
-export function dir(dir: string): string {
-    if (vvs.isEmptyString(dir)) return ''
+export function Duplicates(whereFindDuplicates: string[]) {
+    if (vv.isEmpty(whereFindDuplicates) || !Array.isArray(whereFindDuplicates)) return []
+    const arr = whereFindDuplicates.map(m => { return vv.nz(vv.toString(m), '').toLowerCase().trim() }).filter(f => !vv.isEmpty(f))
+    const count = cnt => cnt.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1}), {})
+    const doubles = dict => Object.keys(dict).filter((a) => dict[a] > 1)
+    return (doubles(count(arr)))
+}
+
+export function Dir(dir: string): string {
+    if (vv.isEmpty(dir)) return ''
     return dir.replace(/\\/g, '/')
 }
 
-export function nzs(s: string | undefined, def: string): string {
-    return vvs.isEmptyString(s) ? def : s as string
-}
+// export function nzs(s: string | undefined, def: string): string {
+//     return vvs.isEmptyString(s) ? def : s as string
+// }
 
-export function readfiles(result: {full_file_name: string, data: string | undefined}[], idx: number, callback: (error: Error | undefined) => void): void {
+export function ReadFiles(result: {fullFileName: string, data: string | undefined}[], idx: number, callback: (error: Error | undefined) => void): void {
     if (idx >= result.length) {
         callback(undefined)
         return
     }
     const file = result[idx]
-    fs.readFile(file.full_file_name, 'utf8', (error, data) => {
+    fs.readFile(file.fullFileName, 'utf8', (error, data) => {
         if (error) {
             callback(error)
             return
         }
         file.data = data
         idx++
-        readfiles(result, idx, callback)
+        ReadFiles(result, idx, callback)
     })
 }
 
-export function ensuredirs(dirs: string[], idx: number, callback: (error: Error | undefined) => void): void {
+export function EnsureDirs(dirs: string[], idx: number, callback: (error: Error | undefined) => void): void {
     if (idx >= dirs.length) {
         callback(undefined)
         return
@@ -43,30 +51,30 @@ export function ensuredirs(dirs: string[], idx: number, callback: (error: Error 
             return
         }
         idx++
-        ensuredirs(dirs, idx, callback)
+        EnsureDirs(dirs, idx, callback)
     })
 }
 
-export function savefiles(files: {full_file_name: string, data: string}[], idx: number, callback: (error: Error | undefined) => void): void {
+export function SaveFiles(files: {fullFileName: string, data: string}[], idx: number, callback: (error: Error | undefined) => void): void {
     if (idx >= files.length) {
         callback(undefined)
         return
     }
     try {
         const file = files[idx]
-        const dir = path.parse(file.full_file_name).dir
+        const dir = path.parse(file.fullFileName).dir
         fs.ensureDir(dir, error => {
             if (error) {
                 callback(error)
                 return
             }
-            fs.writeFile(file.full_file_name, file.data, error => {
+            fs.writeFile(file.fullFileName, file.data, error => {
                 if (error) {
                     callback(error)
                     return
                 }
                 idx++
-                savefiles(files, idx, callback)
+                SaveFiles(files, idx, callback)
             })
         })
     } catch (error) {
@@ -74,32 +82,32 @@ export function savefiles(files: {full_file_name: string, data: string}[], idx: 
     }
 }
 
-export function deletefiles(files: {full_file_name: string, error: Error}[], idx: number, callback: () => void): void {
+export function DeleteFiles(files: {fullFileName: string, error: Error}[], idx: number, callback: () => void): void {
     if (idx >= files.length) {
         callback()
         return
     }
     const file = files[idx]
-    if (vvs.isEmptyString(file.full_file_name)) {
+    if (vv.isEmpty(file.fullFileName)) {
         idx++
-        deletefiles(files, idx, callback)
+        DeleteFiles(files, idx, callback)
         return
     }
-    fs.unlink(file.full_file_name, error => {
+    fs.unlink(file.fullFileName, error => {
         if (error) {
             file.error = error
         }
         idx++
-        deletefiles(files, idx, callback)
+        DeleteFiles(files, idx, callback)
     })
 }
 
-export function hash(s: string): string {
+export function Hash(s: string): string {
     return SHA512(s).toString(cryptojs.enc.Base64)
 }
 
-export function to_string(val: any): string {
-    if (vvs.isEmpty(val)) return ''
+export function ToString(val: any): string {
+    if (vv.isEmpty(val)) return ''
     const tf = typeof val
     if (tf === 'string') return val as string
     if (tf === 'boolean') {
@@ -107,18 +115,18 @@ export function to_string(val: any): string {
         if (val === false) return 'false'
         return ''
     }
-    if (val instanceof Date) return vvs.formatDate(val, 126)
+    if (val instanceof Date) return vv.dateFormat(val, '126')
     if (val instanceof Object) return JSON.stringify(val)
     return val as string
 }
 
-export function to_number(val: any): number {
-    if (vvs.isEmpty(val)) return 0
+export function ToNumber(val: any): number {
+    if (vv.isEmpty(val)) return 0
     const tf = typeof val
     if (tf === 'boolean') {
         if (val === true) return 1
         if (val === false) return 0
         return 0
     }
-    return vvs.toFloat(val)
+    return vv.toFloat(val)
 }

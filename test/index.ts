@@ -1,24 +1,25 @@
 import * as fs from 'fs-extra'
 import * as path from 'path'
-import { save_persons, save_servers, save_logs } from './states_data'
+import { SavePersons, SaveServers, SaveLogs } from './states_data'
 import * as lib from '../src'
 import * as test_get from './test_get'
 import * as test_set from './test_set'
 
-const path_root = path.resolve(__dirname, 'test-states')
-const path_data = path.resolve(path_root, 'data' )
-const path_map = path.resolve(path_root, 'map' )
-const path_person = path.resolve(path_data,  'person')
-const path_server = path.resolve(path_data, 'server')
-const path_log1 = path.resolve(path_data,  'log1')
-const path_log2 = path.resolve(path_data,  'log2')
+const pathRoot = path.resolve(__dirname, 'test-states')
+const pathData = path.resolve(pathRoot, 'data' )
+const pathMap = path.resolve(pathRoot, 'map' )
+const pathPerson = path.resolve(pathData,  'person')
+const pathServer = path.resolve(pathData, 'server')
+const pathLog1 = path.resolve(pathData,  'log1')
+const pathLog2 = path.resolve(pathData,  'log2')
 
 const env = {
-    exit_after_all_test: true,
-    on_state_complete_count: 0,
-    global_error: undefined as any as Error,
+    allowExitAfterAllTest: true,
+    isInMemory: false,
+    onStateCompleteCount: 0,
+    globalError: undefined as any as Error,
     //set_tests: [] as {id: number, key: string}[],
-    on_state_change_rows: [] as {
+    onStateChangeRows: [] as {
         action: "insert" | "delete",
         state: string,
         rows: lib.TypeStateRow[]
@@ -26,40 +27,40 @@ const env = {
 }
 
 try {
-    fs.emptyDirSync(path_root)
-    fs.emptyDirSync(path_person)
-    fs.emptyDirSync(path_server)
-    fs.emptyDirSync(path_log1)
-    fs.emptyDirSync(path_log2)
-    save_persons(path_person)
-    save_servers(path_server)
-    save_logs(path_log1)
-    save_logs(path_log2)
+    fs.emptyDirSync(pathRoot)
+    fs.emptyDirSync(pathPerson)
+    fs.emptyDirSync(pathServer)
+    fs.emptyDirSync(pathLog1)
+    fs.emptyDirSync(pathLog2)
+    SavePersons(pathPerson)
+    SaveServers(pathServer)
+    SaveLogs(pathLog1)
+    SaveLogs(pathLog2)
 
-    const db = lib.create({
-        path_data: path_data,
-        path_map: path_map,
-        callback_state_change_delay: 5000,
+    const db = lib.Create({
+        pathData: pathData,
+        pathMap: 'MEMORY', //pathMap,
+        callbackStateChangeDelay: 5000,
         states: [
             {
                 name: 'person',
-                type_data: 'json',
+                typeData: 'json',
                 indexes: [{prop: 'id', type: 'number'}, {prop: 'age', type: 'number'}, {prop: 'gender', type: 'string'}]
             },
             {
                 name: 'server',
-                type_data: 'json',
+                typeData: 'json',
                 indexes: [{prop: 'location', type: 'string'}]
             },
             {
                 name: 'log1',
-                type_data: 'json',
-                indexes: [{prop: 'is_error', type: 'number'}, {prop: 'date', type: 'string'}]
+                typeData: 'json',
+                indexes: [{prop: 'isError', type: 'number'}, {prop: 'date', type: 'string'}]
             },
             {
                 name: 'log2',
-                type_data: 'json',
-                indexes: [{prop: 'is_error', type: 'number'}, {prop: 'date', type: 'string'}]
+                typeData: 'json',
+                indexes: [{prop: 'isError', type: 'number'}, {prop: 'date', type: 'string'}]
             },
         ]
     }, error => {
@@ -70,44 +71,44 @@ try {
         }
     })
 
-    db.callback.on_error(error => {
+    db.callback.onError(error => {
         console.warn('ERROR IN db.callback.on_error')
         console.warn(error)
     })
 
-    db.callback.on_state_change((rows, sets) => {
+    db.callback.onStateChange((rows, sets) => {
         rows.forEach(row => {
-            const fnd = env.on_state_change_rows.find(f => f.state === row.state && f.action === row.action)
+            const fnd = env.onStateChangeRows.find(f => f.state === row.state && f.action === row.action)
             if (fnd) {
                 fnd.rows.push(...row.rows)
             } else {
-                env.on_state_change_rows.push(row)
+                env.onStateChangeRows.push(row)
             }
         })
         if (sets.length <= 0) {
             return
         }
         if (sets.length > 1) {
-            env.global_error = new Error('on_state_change - sets.length > 1')
+            env.globalError = new Error('on_state_change - sets.length > 1')
             return
         }
 
         let idx = test_set.tests.findIndex(f => f.key === sets[0].key)
-        test_set.go_check(db, idx, env.on_state_change_rows.splice(0, env.on_state_change_rows.length), sets[0].error, () => {
+        test_set.GoCheck(db, idx, env.onStateChangeRows.splice(0, env.onStateChangeRows.length), sets[0].error, () => {
             idx++
-            test_set.go_send(db, idx)
+            test_set.GoSend(db, idx)
         })
     })
 
-    db.callback.on_state_complete(() => {
-        env.on_state_complete_count++
-        if (env.on_state_complete_count > 1) {
+    db.callback.onStateComplete(() => {
+        env.onStateCompleteCount++
+        if (env.onStateCompleteCount > 1) {
             console.warn(`on_state_complete_count > 1`)
             process.exit()
         }
 
-        test_get.go(db, 0, () => {
-            test_set.go_send(db, 0)
+        test_get.Go(db, 0, () => {
+            test_set.GoSend(db, 0)
         })
     })
 
@@ -144,12 +145,12 @@ setInterval(() => {
         test.state = 'informed'
     })
 
-    if (env.global_error) {
-        console.warn(`global_error: ${env.global_error.message}`)
+    if (env.globalError) {
+        console.warn(`global_error: ${env.globalError.message}`)
         process.exit()
     }
 
-    if (env.exit_after_all_test && test_get.tests.every(f => f.state === 'informed') && test_set.tests.every(f => f.state === 'informed')) {
+    if (env.allowExitAfterAllTest && test_get.tests.every(f => f.state === 'informed') && test_set.tests.every(f => f.state === 'informed')) {
         setTimeout(() => {
             process.exit()
         }, 5000)

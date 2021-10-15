@@ -1,111 +1,111 @@
-import * as vvs from 'vv-shared'
+import * as vv from 'vv-common'
 import { State } from "."
-import { TypeIndex, TypeStateRow } from '../index.env'
+import { TIndex, TStateRow } from '../index.env'
 
-export function select_by_props(
+export function SelectByProps(
     state: State,
-    filter_path: string | undefined,
-    filter_file: string | undefined,
-    filter_index_string: {index: string, value: string}[],
-    filter_index_number: {index: string, value: number}[],
-    callback: (error: Error | undefined, rows: TypeStateRow[]) => void
+    filterPath: string | undefined,
+    filterFile: string | undefined,
+    filterIndexString: {index: string, value: string}[],
+    filterIndexNumber: {index: string, value: number}[],
+    callback: (error: Error | undefined, rows: TStateRow[]) => void
 ) {
-    const filters_join = [] as string[]
-    const filters_where = [] as string[]
+    const filtersJoin = [] as string[]
+    const filtersWhere = [] as string[]
 
-    filter_index_string.forEach((f, f_idx) => {
-        const name = `dis${f_idx}`
-        filters_join.push(`JOIN "data_index_string" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND ${name}."value" ${ffs(f.value)}`)
+    filterIndexString.forEach((f, fIdx) => {
+        const name = `dis${fIdx}`
+        filtersJoin.push(`JOIN "DataIndexString" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND ${name}."value" ${ffs(f.value)}`)
     })
-    filter_index_number.forEach((f, f_idx) => {
-        const name = `din${f_idx}`
-        filters_join.push(`JOIN "data_index_number" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND ${name}."value" ${ffn(f.value)}`)
+    filterIndexNumber.forEach((f, fIdx) => {
+        const name = `din${fIdx}`
+        filtersJoin.push(`JOIN "DataIndexNumber" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND ${name}."value" ${ffn(f.value)}`)
     })
 
-    if (filter_path) {
-        filters_where.push(`d."path" '${ffs(filter_path)}'`)
+    if (filterPath) {
+        filtersWhere.push(`d."path" '${ffs(filterPath)}'`)
     }
-    if (filter_file) {
-        filters_where.push(`d."file" '${ffs(filter_file)}'`)
+    if (filterFile) {
+        filtersWhere.push(`d."file" '${ffs(filterFile)}'`)
     }
 
-    select(state, filters_join, filters_where, callback)
+    select(state, filtersJoin, filtersWhere, callback)
 }
 
-export function select_by_query(
+export function SelectByQuery(
     state: State,
-    filter_global: string | undefined,
-    filter_index_string: {index: string, query: string}[],
-    filter_index_number: {index: string, query: string}[],
-    callback: (error: Error | undefined, rows: TypeStateRow[]) => void
+    filterGlobal: string | undefined,
+    filterIndexString: {index: string, query: string}[],
+    filterIndexNumber: {index: string, query: string}[],
+    callback: (error: Error | undefined, rows: TStateRow[]) => void
 ) {
-    const filters_join = [] as string[]
-    const filters_where = [] as string[]
+    const filtersJoin = [] as string[]
+    const filtersWhere = [] as string[]
 
-    filter_index_string.filter(f => !vvs.isEmptyString(f.query)).forEach((f, f_idx) => {
-        const name = `dis${f_idx}`
-        const subquery = vvs.replaceAll(f.query, '$value', `${name}."value"`)
-        filters_join.push(`JOIN "data_index_string" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND (${subquery})`)
+    filterIndexString.filter(f => !vv.isEmpty(f.query)).forEach((f, fIdx) => {
+        const name = `dis${fIdx}`
+        const subquery = f.query.replace(/\$value/g, `${name}."value"`)
+        filtersJoin.push(`JOIN "DataIndexString" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND (${subquery})`)
     })
-    filter_index_number.filter(f => !vvs.isEmptyString(f.query)).forEach((f, f_idx) => {
-        const name = `din${f_idx}`
-        const subquery = vvs.replaceAll(f.query, '$value', `${name}."value"`)
-        filters_join.push(`JOIN "data_index_number" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND (${subquery})`)
+    filterIndexNumber.filter(f => !vv.isEmpty(f.query)).forEach((f, fIdx) => {
+        const name = `din${fIdx}`
+        const subquery = f.query.replace(/\$value/g, `${name}."value"`)
+        filtersJoin.push(`JOIN "DataIndexNumber" ${name} ON ${name}."path" = d."path" AND ${name}."file" = d."file" AND ${name}."prop" ${ffs(f.index)} AND (${subquery})`)
     })
 
-    if (!vvs.isEmptyString(filter_global)) {
-        let subquery = vvs.replaceAll(filter_global, '$path',`d."path"`)
-        subquery = vvs.replaceAll(subquery, '$file',`d."file"`)
-        filters_where.push(` ${subquery}`)
+    if (!vv.isEmpty(filterGlobal)) {
+        let subquery = filterGlobal.replace(/\$path/g,`d."path"`)
+        subquery = subquery.replace(/\$file/g,`d."file"`)
+        filtersWhere.push(` ${subquery}`)
     }
 
-    select(state, filters_join, filters_where, callback)
+    select(state, filtersJoin, filtersWhere, callback)
 }
 
-function select(state: State, filters_join: string[], filters_where: string[], callback: (error: Error | undefined, rows: TypeStateRow[]) => void) {
-    const query_data = `SELECT d."path", d."file", d."data" FROM "data" d `
-        .concat(filters_join.length > 0 ? filters_join.join(' ') : ' ')
-        .concat(filters_where.length > 0 ? ` WHERE ${filters_where.join(' AND ')}` : ' ')
-    const query_indexes_string = `SELECT d."path", d."file", dis."prop", dis."value" FROM "data" d `
-        .concat(filters_join.length > 0 ? filters_join.join(' ') : ' ')
-        .concat(` JOIN "data_index_string" dis ON dis."path" = d."path" AND dis."file" = d."file"`)
-    const query_indexes_number = `SELECT d."path", d."file", din."prop", din."value" FROM "data" d `
-        .concat(filters_join.length > 0 ? filters_join.join(' ') : ' ')
-        .concat(` JOIN "data_index_number" din ON din."path" = d."path" AND din."file" = d."file"`)
+function select(state: State, joinFilters: string[], whereFilters: string[], callback: (error: Error | undefined, rows: TStateRow[]) => void) {
+    const queryData = `SELECT d."path", d."file", d."data" FROM "Data" d `
+        .concat(joinFilters.length > 0 ? joinFilters.join(' ') : ' ')
+        .concat(whereFilters.length > 0 ? ` WHERE ${whereFilters.join(' AND ')}` : ' ')
+    const queryIndexesString = `SELECT d."path", d."file", dis."prop", dis."value" FROM "Data" d `
+        .concat(joinFilters.length > 0 ? joinFilters.join(' ') : ' ')
+        .concat(` JOIN "DataIndexString" dis ON dis."path" = d."path" AND dis."file" = d."file"`)
+    const queryIndexesNumber = `SELECT d."path", d."file", din."prop", din."value" FROM "Data" d `
+        .concat(joinFilters.length > 0 ? joinFilters.join(' ') : ' ')
+        .concat(` JOIN "DataIndexNumber" din ON din."path" = d."path" AND din."file" = d."file"`)
 
-    state.sqlite.exec_core_select(query_data, undefined, (error, data_rows) => {
+    state.sqlite.execCoreSelect(queryData, undefined, (error, dataRows) => {
         if (error) {
-            state.callback_error(`select: "${error.message}"`)
+            state.callbackError(`select: "${error.message}"`)
             callback(error, [])
             return
         }
 
-        if (data_rows.length <= 0) {
-            callback(undefined, data_rows.map(m => { return { path: m['path'], file: m['file'], data: m['data'] } }))
+        if (dataRows.length <= 0) {
+            callback(undefined, dataRows.map(m => { return { path: m['path'], file: m['file'], data: m['data'] } }))
             return
         }
 
-        select_indexes('string', state, query_indexes_string, (error, indexes_string) => {
+        selectIndexes('string', state, queryIndexesString, (error, stringIndexes) => {
             if (error) {
-                state.callback_error(`select: "${error.message}"`)
+                state.callbackError(`select: "${error.message}"`)
                 callback(error, [])
                 return
             }
-            select_indexes('number', state, query_indexes_number, (error, indexes_number) => {
+            selectIndexes('number', state, queryIndexesNumber, (error, numberIndexes) => {
                 if (error) {
-                    state.callback_error(`select: "${error.message}"`)
+                    state.callbackError(`select: "${error.message}"`)
                     callback(error, [])
                     return
                 }
 
-                callback(undefined, data_rows.map(m => {
+                callback(undefined, dataRows.map(m => {
                     return {
                         path: m['path'],
                         file: m['file'],
                         data: m['data'],
                         indexes: [
-                            ...indexes_string.filter(f => f.path === m['path'] && f.file === m['file']).map(m => { return { prop: m.prop, value: m.value, type: 'string' as TypeIndex } }),
-                            ...indexes_number.filter(f => f.path === m['path'] && f.file === m['file']).map(m => { return { prop: m.prop, value: m.value, type: 'number' as TypeIndex } }),
+                            ...stringIndexes.filter(f => f.path === m['path'] && f.file === m['file']).map(m => { return { prop: m.prop, value: m.value, type: 'string' as TIndex } }),
+                            ...numberIndexes.filter(f => f.path === m['path'] && f.file === m['file']).map(m => { return { prop: m.prop, value: m.value, type: 'number' as TIndex } }),
                         ]
                     }
                 }))
@@ -114,16 +114,16 @@ function select(state: State, filters_join: string[], filters_where: string[], c
     })
 }
 
-function select_indexes(index_type: string, state: State, query: string, callback: (error: Error | undefined, indexes: {path: string, file: string, prop: string, value: string | number}[]) => void) {
-    if (!state.indexes.some(f => f.type === index_type)) {
+function selectIndexes(indexType: string, state: State, query: string, callback: (error: Error | undefined, indexes: {path: string, file: string, prop: string, value: string | number}[]) => void) {
+    if (!state.indexes.some(f => f.type === indexType)) {
         callback(undefined, [])
         return
     }
-    state.sqlite.exec_core_select(query, undefined, (error, index_string_rows) => {
+    state.sqlite.execCoreSelect(query, undefined, (error, indexStringRows) => {
         if (error) {
             callback(error, [])
         } else {
-            callback(undefined, index_string_rows.map(m => { return {
+            callback(undefined, indexStringRows.map(m => { return {
                 path: m['path'],
                 file: m['file'],
                 prop: m['prop'],
@@ -134,11 +134,11 @@ function select_indexes(index_type: string, state: State, query: string, callbac
 }
 
 function ffs(s: string): string {
-    if (vvs.isEmpty(s)) return 'IS NULL'
+    if (vv.isEmpty(s)) return 'IS NULL'
     return ` = '${s.replace(/'/g,"''")}'`
 }
 
 function ffn(n: number): string {
-    if (vvs.isEmpty(n)) return 'IS NULL'
+    if (vv.isEmpty(n)) return 'IS NULL'
     return ` = ${n}`
 }
