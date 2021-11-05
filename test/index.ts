@@ -5,6 +5,11 @@ import * as lib from '../src'
 import * as test_get from './test_get'
 import * as test_set from './test_set'
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const ALLOW_DEBUG = true
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const ALLOW_MAP_IN_MEMORY = false
+
 const pathRoot = path.resolve(__dirname, 'test-states')
 const pathData = path.resolve(pathRoot, 'data' )
 const pathMap = path.resolve(pathRoot, 'map' )
@@ -12,6 +17,8 @@ const pathPerson = path.resolve(pathData,  'person')
 const pathServer = path.resolve(pathData, 'server')
 const pathLog1 = path.resolve(pathData,  'log1')
 const pathLog2 = path.resolve(pathData,  'log2')
+
+
 
 const env = {
     allowExitAfterAllTest: true,
@@ -39,7 +46,7 @@ try {
 
     const db = lib.Create({
         pathData: pathData,
-        pathMap: 'MEMORY', //pathMap,
+        pathMap: ALLOW_MAP_IN_MEMORY ? 'MEMORY':  pathMap,
         callbackStateChangeDelay: 5000,
         states: [
             {
@@ -75,6 +82,12 @@ try {
         console.warn('ERROR IN db.callback.on_error')
         console.warn(error)
     })
+
+    if (ALLOW_DEBUG) {
+        db.callback.onDebug(debug => {
+            console.log(debug)
+        })
+    }
 
     db.callback.onStateChange((rows, sets) => {
         rows.forEach(row => {

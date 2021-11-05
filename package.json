@@ -20,24 +20,24 @@
     "homepage": "https://github.com/VasilevVitalii/backdepot#readme",
     "license": "MIT",
     "dependencies": {
-        "@types/better-sqlite3": "^7.4.0",
+        "@types/better-sqlite3": "^7.4.1",
         "@types/fs-extra": "^9.0.13",
-        "better-sqlite3": "^7.4.3",
+        "better-sqlite3": "^7.4.4",
         "chokidar": "^3.5.2",
         "crypto-js": "^4.1.1",
         "fs-extra": "^10.0.0",
-        "vv-common": "^0.0.2",
-        "vv-filestream": "0.1.0"
+        "vv-common": "^0.0.6",
+        "vv-filestream": "0.1.2"
     },
     "devDependencies": {
-        "@types/node": "16.11.0",
-        "@typescript-eslint/eslint-plugin": "5.0.0",
-        "@typescript-eslint/parser": "5.0.0",
-        "eslint": "8.0.1",
-        "npm-check-updates": "11.8.5",
+        "@types/node": "16.11.6",
+        "@typescript-eslint/eslint-plugin": "5.3.0",
+        "@typescript-eslint/parser": "5.3.0",
+        "eslint": "8.1.0",
+        "npm-check-updates": "12.0.0",
         "prettier": "2.4.1",
-        "ts-node": "10.3.0",
+        "ts-node": "10.4.0",
         "typescript": "4.4.4",
-        "vv-template-nodebackend": "^0.0.10"
+        "vv-template-nodebackend": "^0.0.12"
     }
 }
