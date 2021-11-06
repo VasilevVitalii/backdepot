@@ -1,4 +1,4 @@
 //@ts-check
-const path = require('path')
-require('ts-node').register()
-require(path.resolve(__dirname, './worker.ts'))
+// const path = require('path')
+// require('ts-node').register()
+// require(path.resolve(__dirname, './worker.ts'))

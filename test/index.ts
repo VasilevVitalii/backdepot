@@ -10,7 +10,7 @@ const ALLOW_DEBUG = true
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const ALLOW_MAP_IN_MEMORY = false
 
-const pathRoot = path.resolve(__dirname, 'test-states')
+const pathRoot = path.resolve(__dirname, '..', '..', 'test', 'test-states')
 const pathData = path.resolve(pathRoot, 'data' )
 const pathMap = path.resolve(pathRoot, 'map' )
 const pathPerson = path.resolve(pathData,  'person')
@@ -18,14 +18,11 @@ const pathServer = path.resolve(pathData, 'server')
 const pathLog1 = path.resolve(pathData,  'log1')
 const pathLog2 = path.resolve(pathData,  'log2')
 
-
-
 const env = {
     allowExitAfterAllTest: true,
     isInMemory: false,
     onStateCompleteCount: 0,
     globalError: undefined as any as Error,
-    //set_tests: [] as {id: number, key: string}[],
     onStateChangeRows: [] as {
         action: "insert" | "delete",
         state: string,
