@@ -6,7 +6,7 @@ import * as test_get from './test_get'
 import * as test_set from './test_set'
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-const ALLOW_DEBUG = true
+const ALLOW_DEBUG = false
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const ALLOW_MAP_IN_MEMORY = false
 

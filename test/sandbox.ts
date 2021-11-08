@@ -35,6 +35,14 @@ db.callback.onDebug(debug => {
 
 db.callback.onStateComplete(() => {
     console.log('STATE COMPLETE!!!')
+    fs.writeFile(path.join(pathData, 'person', 'example.json'), JSON.stringify({a: 1}), {encoding: 'utf8'}, err => {
+        if (err) console.error(err)
+    })
+})
+
+db.callback.onStateChange(state => {
+    console.log('CHANGE!!!')
+    console.log(state)
 })
 
 db.start()
