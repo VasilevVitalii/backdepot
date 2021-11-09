@@ -4,6 +4,7 @@ import worker_threads from 'worker_threads'
 import * as fs from 'fs-extra'
 import * as vv from 'vv-common'
 import { TOptions, Env, TChannelWorkerFrom, TChannelWorkerTo, TChannelStateFilterObtain, TChannelStateFilterQuery, TStateRowChange, TSetCallback, TStateRow }  from './index.env'
+import { setTimeout } from 'timers'
 export type {TChannelStateFilterObtain as TypeChannelStateFilterObtain, TChannelStateFilterQuery as TypeChannelStateFilterQuery, TStateRow as TypeStateRow, TStateRowChange as TypeStateRowChange, TSetCallback as TypeSetCallback}
 
 type TCallbackFunctionOnError =  (error: string) => void
@@ -75,7 +76,7 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     } else if (workerInfo.type === 'message_trace' && callbackTrace) {
                         callbackTrace(workerInfo.trace)
                     } else if (workerInfo.type === 'state_complete' && callbackStateComplete ) {
-                        callbackStateComplete()
+                        setTimeout(() => { callbackStateComplete() }, 0)
                     } else if (workerInfo.type === 'get.obtain' || workerInfo.type === 'get.query') {
                         const channelQueueIdx = channelQueueLoadStates.findIndex(f => f.key === workerInfo.key)
                         if (channelQueueIdx < 0) return
@@ -83,7 +84,7 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                         if (!channelItem || channelItem.length <= 0) return
                         channelItem[0].callback(workerInfo.error, workerInfo.rows)
                     } else if (workerInfo.type === 'state_change' && callbackStateChange ) {
-                        callbackStateChange(workerInfo.rows, workerInfo.sets)
+                        setTimeout(() => { callbackStateChange(workerInfo.rows, workerInfo.sets) }, 0)
                     }
                 })
             },
