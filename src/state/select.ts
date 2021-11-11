@@ -1,5 +1,5 @@
 import * as vv from 'vv-common'
-import { State } from "."
+import { State } from "./index"
 import { TIndex, TStateRow } from '../index.env'
 
 export function SelectByProps(

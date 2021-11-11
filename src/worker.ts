@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { workerData, parentPort } from 'worker_threads'
 import { Env, TChannelStateFilterObtain, TChannelStateFilterQuery, TChannelWorkerFrom, TChannelWorkerTo, TOptionsStateIndex, TStateRow } from './index.env'
-import { State } from './state'
+import { State } from './state/index'
 import * as vv from 'vv-common'
 import { DeleteFiles, Dir, SaveFiles } from './z'
 import { TypeDataHandler } from './typedata'

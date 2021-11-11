@@ -1,4 +1,4 @@
-import { State } from "."
+import { State } from "./index"
 import { FsStat } from '../fsstat'
 import { ReadFiles } from '../z'
 import { FromFile } from '../pk'

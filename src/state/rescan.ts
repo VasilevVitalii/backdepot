@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { FsStat } from '../fsstat'
-import { State } from "."
+import { State } from "./index"
 import { FromFile} from '../pk'
 import * as vv from 'vv-common'
 import { TRow as Row_Data} from '../sqlite/table.data'

@@ -1,4 +1,4 @@
-import { State } from "."
+import { State } from "./index"
 import { FromFile } from '../pk'
 
 export function TimerWatchQueue (state: State) {

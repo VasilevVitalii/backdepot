@@ -1,4 +1,4 @@
-import { State } from "."
+import { State } from "./index"
 
 export function Reindex(state: State, callback: (success: boolean) => void) {
     state.callbackDebug(`map reindex: begin`)

@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { FsStat } from '../fsstat'
 import { TEnvState, TOptionsStateIndex, TStateRow } from "../index.env"
-import { Sqlite } from '../sqlite'
+import { Sqlite } from '../sqlite/index'
 import { Dir } from '../z'
 import * as vv from 'vv-common'
 import * as chokidar from 'chokidar'
