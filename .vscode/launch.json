@@ -19,12 +19,12 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "sandbox",
+            "name": "demo",
             "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
             "sourceMaps": true,
             "skipFiles": ["<node_internals>/**"],
             "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
-            "program": "${workspaceFolder}/test/sandbox.ts",
+            "program": "${workspaceFolder}/demo/index.ts",
             "protocol": "inspector",
             "preLaunchTask": "npm: build"
         }

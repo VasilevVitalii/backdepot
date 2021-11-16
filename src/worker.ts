@@ -312,9 +312,6 @@ function loadStateQuery(channelState: TChannelStateFilterQuery, callback: (error
             channelState.filterGlobal,
             indexes.filter(f => f.index.type === 'string').map(m => { return {index: m.index.prop, query: m.query}}),
             indexes.filter(f => f.index.type === 'number').map(m => { return {index: m.index.prop, query: m.query}}),
-            // rows => {
-            //     rows.forEach(row => { row.data = state.type_data.loaddata(row.data as string) })
-            //     callback(undefined, rows)
             (error, rows) => {
                 if (error) {
                     callback(error, [])

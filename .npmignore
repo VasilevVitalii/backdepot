@@ -2,9 +2,11 @@
 /.github
 /.vscode
 /node_modules
+/demo
 /src
 /test
 /dist/test
+/dist/demo
 .eslintignore
 .eslintrc.json
 .prettierignore
