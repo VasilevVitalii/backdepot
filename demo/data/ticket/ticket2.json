@@ -2,9 +2,16 @@
     "id": 2,
     "author": "Alexander Miller",
     "assegnee": [
-        "Olivia Brown",
-        "Elijah Johnson"
+        {
+            "name": "Olivia Brown"
+        },
+        {
+            "name": "Elijah Johnson"
+        }
     ],
-    "task": "review my unit test",
+    "task": [
+        "review unit test #1",
+        "review unit test #2"
+    ],
     "deadline": "2021-11-16T21:00:00.000Z"
 }

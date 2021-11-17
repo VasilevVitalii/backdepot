@@ -41,7 +41,7 @@ if (pp) {
                     if (error && !sendError) {
                         sendError = error
                     }
-                    resultRows.push({state: filter.state, rows: rows})
+                    resultRows.push({state: filter?.state, rows: rows})
                     if (resultRows.length >= data.filter.length) {
                         const message = {
                             type: 'get.obtain',
@@ -284,6 +284,10 @@ if (pp) {
 
 function loadStateObtain(channelState: TChannelStateFilterObtain, callback: (error: Error | undefined, rows: TStateRow[]) => void) {
     try {
+        if (!channelState || !channelState.state) {
+            callback(undefined, [])
+            return
+        }
         const state = findState(channelState.state)
         const indexes = channelState.filters ? channelState.filters.map(m => { return {index: findIndex(state, m.index), value: m.value} }) : []
         state.selectByProps(

@@ -4,17 +4,17 @@ import { TPerson, TTicket } from '.'
 import { IApp, TypeChannelStateFilterObtain, TypeChannelStateFilterQuery } from '../src/index'
 
 const persons: TPerson[] = [
-    {name: 'Liam Smith', age: 65, gender: 'm'},
-    {name: 'Olivia Brown', age: 38, gender: 'w'},
-    {name: 'Elijah Johnson', age: 42, gender: 'm'},
-    {name: 'Alexander Miller', age: 35, gender: 'm'},
-    {name: 'Mia Rodriguez', age: 25, gender: 'w'},
-    {name: 'Charlotte Davis', age: 27, gender: 'w'},
+    {name: 'Liam Smith', age: 65, gender: 'm', tags: ['tag1', 'tag2']},
+    {name: 'Olivia Brown', age: 38, gender: 'w', tags: ['tag1']},
+    {name: 'Elijah Johnson', age: 42, gender: 'm', tags: ['tag2', 'tag3']},
+    {name: 'Alexander Miller', age: 35, gender: 'm', tags: ['tag4', 'tag2']},
+    {name: 'Mia Rodriguez', age: 25, gender: 'w', tags: ['tag1', 'tag4']},
+    {name: 'Charlotte Davis', age: 27, gender: 'w', tags: ['tag5', 'tag6']},
 ]
 
 const tickets: TTicket[] = [
-    {id: 1, author: 'Liam Smith', assegnee: ['Alexander Miller', 'Mia Rodriguez'], task: 'create unit test', deadline: new Date(2021, 9, 17)},
-    {id: 2, author: 'Alexander Miller', assegnee: ['Olivia Brown', 'Elijah Johnson'], task: 'review my unit test', deadline: new Date(2021, 10, 17)},
+    {id: 1, author: 'Liam Smith', assegnee: [{name: 'Alexander Miller'}, {name: 'Mia Rodriguez'}], task: 'create unit test', history: {create: new Date(2021, 9, 16), deadline: new Date(2021, 9, 17)}},
+    {id: 2, author: 'Alexander Miller', assegnee: [{name: 'Olivia Brown'}, {name: 'Elijah Johnson'}], task: 'review unit test', history: {create: new Date(2021, 9, 16), deadline: new Date(2021, 10, 17)}},
 ]
 
 export function PrepareData(dataPath: string): {personPath: string, ticketPath: string} {
@@ -50,8 +50,10 @@ type TFilter<T> = {
 type TFilterObtain = TFilter<TypeChannelStateFilterObtain>
 
 export const exampleFilterObtain: TFilterObtain[] = [
-    {title: `PERSON: Get person with name 'Liam Smith'`, filter: {state: 'person', filters: [{index: 'name', value: 'Liam Smith'}]}},
+    {title: `PERSON: Get all persons`, filter: {state: 'person'}},
     {title: `PERSON: Get all persons from directory 'coder'`, filter: {state: 'person', filterPath: 'coder'}},
+    {title: `PERSON: Get all persons from file 'coder/person1.json'`, filter: {state: 'person', filterPath: 'coder', filterFile: 'person1.json'}},
+    {title: `PERSON: Get person with name 'Liam Smith'`, filter: {state: 'person', filters: [{index: 'name', value: 'Liam Smith'}]}},
     {title: `PERSON: Get womans from directory 'tester'`, filter: {state: 'person', filterPath: 'tester', filters: [{index: 'gender', value: 'w'}]}},
 ]
 

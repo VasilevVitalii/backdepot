@@ -23,10 +23,10 @@ export function SelectByProps(
     })
 
     if (filterPath) {
-        filtersWhere.push(`d."path" '${ffs(filterPath)}'`)
+        filtersWhere.push(`d."path" ${ffs(filterPath)}`)
     }
     if (filterFile) {
-        filtersWhere.push(`d."file" '${ffs(filterFile)}'`)
+        filtersWhere.push(`d."file" ${ffs(filterFile)}`)
     }
 
     select(state, filtersJoin, filtersWhere, callback)

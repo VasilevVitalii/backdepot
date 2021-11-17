@@ -7,14 +7,18 @@ export type TPerson = {
     name: string,
     age: number,
     gender: ('m' | 'w'),
+    tags: string[]
 }
 
 export type TTicket = {
     id: number,
     author: string,
-    assegnee: string[],
+    assegnee: {name: string}[],
     task: string,
-    deadline: Date
+    history: {
+        create: Date,
+        deadline: Date,
+    }
 }
 
 function debugLevel(): ('off' | 'debug' | 'trace') {return 'debug'}
@@ -29,8 +33,19 @@ const depot = DepotCreate({
     pathMap: mapPath, // OR 'MEMORY',
     pathData: undefined,
     states: [
-        {name: 'person', pathData: prepare.personPath, indexes: [{type: 'string', prop: 'name'}, {type: 'number', prop: 'age'}, {type: 'string', prop: 'gender'}]},
-        {name: 'ticket', pathData: prepare.ticketPath, indexes: [{type: 'number', prop: 'id'}, {type: 'string', prop: 'author'}, {type: 'string', prop: 'deadline'}]},
+        {name: 'person', pathData: prepare.personPath, indexes: [
+            {type: 'string', prop: 'name'},
+            {type: 'number', prop: 'age'},
+            {type: 'string', prop: 'gender'},
+            {type: 'string', prop: 'tags'},
+        ]},
+        {name: 'ticket', pathData: prepare.ticketPath, indexes: [
+            {type: 'number', prop: 'id'},
+            {type: 'string', prop: 'author'},
+            {type: 'string', prop: 'assegnee.name'},
+            {type: 'string', prop: 'history.create'},
+            {type: 'string', prop: 'history.deadline'},
+        ]},
     ]
 })
 
