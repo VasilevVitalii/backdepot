@@ -7,6 +7,7 @@ export type TField = ('path' | 'file' | 'prop' | 'value')
 export type TRow = {
     pk: Pk,
     prop: string,
+    level: string,
     value: number
 }
 
@@ -22,11 +23,13 @@ export class TableData {
     select (fields: TField[], filter: ({field: TField, value: string | number})[], callback: (error: Error | undefined, rows: TRow[]) => void): void  {
         core.OrmSelect(this.db, this.tableName, fields, filter, (error, rows) => {
             callback(error, rows.map(m => {
-                return {
+                const r: TRow = {
                     pk: new Pk(m['path'], m['file']),
                     prop: m['prop'],
+                    level: '',
                     value: m['value']
-                } as TRow
+                }
+                return r
             }))
         })
     }
@@ -41,9 +44,9 @@ export class TableData {
             return
         }
         const query = [
-            `INSERT INTO "${this.tableName}" ("path", "file", "prop", "value")`,
-            `VALUES (@path, @file, @prop, @value)`,
-            `ON CONFLICT (path, file, prop) DO`,
+            `INSERT INTO "${this.tableName}" ("path", "file", "prop", "level", "value")`,
+            `VALUES (@path, @file, @prop, @level, @value)`,
+            `ON CONFLICT ("path", "file", "prop", "level") DO`,
             `UPDATE SET`,
             `"value"=excluded.value`,
         ].join(' ')
@@ -52,6 +55,7 @@ export class TableData {
                 path: m.pk.path,
                 file: m.pk.file,
                 prop: m.prop,
+                level: m.level,
                 value: m.value
             }
         }), callback)

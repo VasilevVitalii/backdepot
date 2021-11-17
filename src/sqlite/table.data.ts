@@ -23,11 +23,12 @@ export class TableData {
     select (fields: TField[], filter: ({field: TField, value: string | number})[] | undefined, callback: (error: Error | undefined, rows: TRow[]) => void): void  {
         core.OrmSelect(this.db, this.tableName, fields, filter, (error, rows) => {
             callback(error, rows.map(m => {
-                return {
+                const r: TRow = {
                     pk: new Pk(m['path'], m['file']),
                     fsstat: new FsStat(m['fsstatMtimeMs'],m['fsstatCtimeMs'],m['fsstatBirthtimeMs'],m['fsstatSize']),
                     data: m['data']
-                } as TRow
+                }
+                return r
             }))
         })
     }

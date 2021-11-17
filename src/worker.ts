@@ -43,12 +43,12 @@ if (pp) {
                     }
                     resultRows.push({state: filter?.state, rows: rows})
                     if (resultRows.length >= data.filter.length) {
-                        const message = {
+                        const message: TChannelWorkerFrom = {
                             type: 'get.obtain',
                             key: data.key,
                             rows: resultRows,
                             error: sendError
-                        } as TChannelWorkerFrom
+                        }
                         pp.postMessage(message)
                     }
                 })
@@ -63,23 +63,23 @@ if (pp) {
                     }
                     resultRows.push({state: filter.state, rows: rows})
                     if (resultRows.length >= data.filter.length) {
-                        const message = {
+                        const message: TChannelWorkerFrom = {
                             type: 'get.query',
                             key: data.key,
                             rows: resultRows,
                             error: sendError
-                        } as TChannelWorkerFrom
+                        }
                         pp.postMessage(message)
                     }
                 })
             })
         } else if (data.type === 'set') {
-            const set = {
+            const set: TStateSet = {
                 key: data.key,
                 error: undefined,
                 isProcessed: false,
                 rows: []
-            } as TStateSet
+            }
             env.stateSet.push(set)
 
             try {
@@ -184,31 +184,31 @@ if (pp) {
                     }
                     if (env.parent.callback.isStateComplete && env.needSendStateChangeInit === true) {
                         env.needSendStateChangeInit = false
-                        const message = {
+                        const message: TChannelWorkerFrom = {
                             type: 'state_complete'
-                        } as TChannelWorkerFrom
+                        }
                         pp.postMessage(message)
                     }
                 },
                 env.parent.callback.allowError === true ? error => {
-                    const message = {
+                    const message: TChannelWorkerFrom = {
                         type: 'message_error',
                         error: `state "${stateEnv.name}" - ${error}`
-                    } as TChannelWorkerFrom
+                    }
                     pp.postMessage(message)
                 } : undefined,
                 env.parent.callback.allowDebug === true ? debug => {
-                    const message = {
+                    const message: TChannelWorkerFrom = {
                         type: 'message_debug',
                         debug: `state "${stateEnv.name}" - ${debug}`
-                    } as TChannelWorkerFrom
+                    }
                     pp.postMessage(message)
                 } : undefined,
                 env.parent.callback.allowTrace === true ? trace => {
-                    const message = {
+                    const message: TChannelWorkerFrom = {
                         type: 'message_trace',
                         trace: `state "${stateEnv.name}" - ${trace}`
-                    } as TChannelWorkerFrom
+                    }
                     pp.postMessage(message)
                 } : undefined,
                 rows => {
@@ -267,11 +267,11 @@ if (pp) {
                         return
                     }
 
-                    const message = {
+                    const message: TChannelWorkerFrom = {
                         type: 'state_change',
                         rows: messageRows,
                         sets: messageSets,
-                    } as TChannelWorkerFrom
+                    }
                     pp.postMessage(message)
 
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars

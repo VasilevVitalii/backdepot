@@ -1,5 +1,9 @@
 {
     "name": "Elijah Johnson",
     "age": 42,
-    "gender": "m"
+    "gender": "m",
+    "tags": [
+        "tag2",
+        "tag3"
+    ]
 }

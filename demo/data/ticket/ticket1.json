@@ -9,9 +9,9 @@
             "name": "Mia Rodriguez"
         }
     ],
-    "task": [
-        "create unit test #1",
-        "create unit test #2"
-    ],
-    "deadline": "2021-10-16T21:00:00.000Z"
+    "task": "create unit test",
+    "history": {
+        "create": "2021-10-15T21:00:00.000Z",
+        "deadline": "2021-10-16T21:00:00.000Z"
+    }
 }

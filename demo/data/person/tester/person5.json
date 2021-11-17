@@ -1,5 +1,9 @@
 {
     "name": "Mia Rodriguez",
     "age": 25,
-    "gender": "w"
+    "gender": "w",
+    "tags": [
+        "tag1",
+        "tag4"
+    ]
 }

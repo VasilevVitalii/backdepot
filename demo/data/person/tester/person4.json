@@ -1,5 +1,9 @@
 {
     "name": "Alexander Miller",
     "age": 35,
-    "gender": "m"
+    "gender": "m",
+    "tags": [
+        "tag4",
+        "tag2"
+    ]
 }

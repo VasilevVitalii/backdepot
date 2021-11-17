@@ -1,5 +1,8 @@
 {
     "name": "Olivia Brown",
     "age": 38,
-    "gender": "w"
+    "gender": "w",
+    "tags": [
+        "tag1"
+    ]
 }

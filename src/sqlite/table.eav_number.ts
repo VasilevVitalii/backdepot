@@ -20,10 +20,11 @@ export class TableData {
     select (fields: TField[], filter: ({field: TField, value: string | number})[], callback: (error: Error | undefined, rows: TRow[]) => void): void  {
         core.OrmSelect(this.db, this.tableName, fields, filter, (error, rows) => {
             callback(error, rows.map(m => {
-                return {
+                const r: TRow = {
                     prop: m['prop'],
                     value: m['value']
-                } as TRow
+                }
+                return r
             }))
         })
     }

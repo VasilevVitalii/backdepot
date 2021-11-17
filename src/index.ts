@@ -52,7 +52,7 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
         let worker: any
         const channelQueueLoadStates = [] as {key: string, callback: TCallbackFunctionGet}[]
 
-        const app = {
+        const app: IApp = {
             start: () => {
                 if (isStarted) return
                 isStarted = true
@@ -98,11 +98,11 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     const key = `obtain.${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), '126')}`
                     channelQueueLoadStates.push({key: key, callback: callback})
 
-                    const message = {
+                    const message: TChannelWorkerTo = {
                         type: 'get.obtain',
                         key: key,
                         filter: filter
-                    } as TChannelWorkerTo
+                    }
                     worker.postMessage(message)
                 },
                 query: (filter: TChannelStateFilterQuery[], callback: TCallbackFunctionGet) => {
@@ -117,11 +117,11 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     const key = `query.${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), '126')}`
                     channelQueueLoadStates.push({key: key, callback: callback})
 
-                    const message = {
+                    const message: TChannelWorkerTo = {
                         type: 'get.query',
                         key: key,
                         filter: filter
-                    } as TChannelWorkerTo
+                    }
                     worker.postMessage(message)
                 },
             },
@@ -133,11 +133,11 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
 
                 const key = `${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), 'yyyymmddhhmissmsec')}`
 
-                const message = {
+                const message: TChannelWorkerTo = {
                     type: 'set',
                     key: key,
                     sets: sets
-                } as TChannelWorkerTo
+                }
                 worker.postMessage(message)
 
                 callback(key)
@@ -164,7 +164,7 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     callbackStateChange = callback
                 }
             }
-        } as IApp
+        }
 
         if (typeof callback === 'function') {
             callback(undefined)

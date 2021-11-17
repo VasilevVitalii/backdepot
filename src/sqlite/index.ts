@@ -80,8 +80,8 @@ export class Sqlite {
             `CREATE TABLE IF NOT EXISTS "EavNumber" ("prop" TEXT NOT NULL PRIMARY KEY, "value" INTEGER)`,
             `CREATE TABLE IF NOT EXISTS "Index" ("prop" TEXT NOT NULL PRIMARY KEY, "type" TEXT NOT NULL)`,
             `CREATE TABLE IF NOT EXISTS "Data" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "data" TEXT, "fsstatSize" INTEGER, "fsstatMtimeMs" INTEGER, "fsstatCtimeMs" INTEGER, "fsstatBirthtimeMs" INTEGER, PRIMARY KEY("path", "file"))`,
-            `CREATE TABLE IF NOT EXISTS "DataIndexString" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "prop" TEXT NOT NULL, "value" TEXT, PRIMARY KEY("path", "file", "prop"))`,
-            `CREATE TABLE IF NOT EXISTS "DataIndexNumber" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "prop" TEXT NOT NULL, "value" INTEGER, PRIMARY KEY("path", "file", "prop"))`,
+            `CREATE TABLE IF NOT EXISTS "DataIndexString" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "prop" TEXT NOT NULL, "level" TEXT NOT NULL, "value" TEXT, PRIMARY KEY("path", "file", "prop", "level"))`,
+            `CREATE TABLE IF NOT EXISTS "DataIndexNumber" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "prop" TEXT NOT NULL, "level" TEXT NOT NULL, "value" INTEGER, PRIMARY KEY("path", "file", "prop", "level"))`,
             `CREATE TABLE IF NOT EXISTS "DataEavString" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "prop" TEXT NOT NULL, "value" TEXT, PRIMARY KEY("path", "file", "prop"))`,
             `CREATE TABLE IF NOT EXISTS "DataEavNumber" ("path" TEXT NOT NULL, "file" TEXT NOT NULL, "prop" TEXT NOT NULL, "value" INTEGER, PRIMARY KEY("path", "file", "prop"))`,
             `INSERT INTO "EavNumber"("prop", "value") SELECT 'schemaver', '${this.schemaver}' WHERE NOT EXISTS (SELECT 1 FROM "EavNumber" WHERE "prop" = 'schemaver')`,
@@ -206,10 +206,18 @@ export class Sqlite {
                 const idxs = row.indexes || this.indexes
                 const json = JSON.parse(row.data)
                 idxs.forEach(index => {
+                    //TODO create tree
+                    // const propTree = index.prop.split('.')
+                    // let value = json
+                    // for (let i = 0; i < propTree.length; i++) {
+                    //     if (value === undefined) break
+                    //     value = value[propTree[i]]
+                    // }
+
                     if (index.type === 'number') {
-                        indexNumberRows.push({pk: row.pk, prop: index.prop, value: ToNumber(json[index.prop])})
+                        indexNumberRows.push({pk: row.pk, prop: index.prop, level: 'O', value: ToNumber(json[index.prop])})
                     } else if (index.type === 'string') {
-                        indexStringRows.push({pk: row.pk, prop: index.prop, value: ToString(json[index.prop])})
+                        indexStringRows.push({pk: row.pk, prop: index.prop, level: 'O', value: ToString(json[index.prop])})
                     }
                 })
             } catch (error) {

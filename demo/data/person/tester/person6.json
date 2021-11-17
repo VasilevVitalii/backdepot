@@ -1,5 +1,9 @@
 {
     "name": "Charlotte Davis",
     "age": 27,
-    "gender": "w"
+    "gender": "w",
+    "tags": [
+        "tag5",
+        "tag6"
+    ]
 }

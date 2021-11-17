@@ -9,9 +9,9 @@
             "name": "Elijah Johnson"
         }
     ],
-    "task": [
-        "review unit test #1",
-        "review unit test #2"
-    ],
-    "deadline": "2021-11-16T21:00:00.000Z"
+    "task": "review unit test",
+    "history": {
+        "create": "2021-10-15T21:00:00.000Z",
+        "deadline": "2021-11-16T21:00:00.000Z"
+    }
 }
