@@ -51,10 +51,11 @@ type TFilterObtain = TFilter<TypeChannelStateFilterObtain>
 
 export const exampleFilterObtain: TFilterObtain[] = [
     {title: `PERSON: Get all persons`, filter: {state: 'person'}},
-    {title: `PERSON: Get all persons from directory 'coder'`, filter: {state: 'person', filterPath: 'coder'}},
-    {title: `PERSON: Get all persons from file 'coder/person1.json'`, filter: {state: 'person', filterPath: 'coder', filterFile: 'person1.json'}},
+    {title: `PERSON: Get persons from directory 'coder'`, filter: {state: 'person', filterPath: 'coder'}},
+    {title: `PERSON: Get person from file 'coder/person1.json'`, filter: {state: 'person', filterPath: 'coder', filterFile: 'person1.json'}},
     {title: `PERSON: Get person with name 'Liam Smith'`, filter: {state: 'person', filters: [{index: 'name', value: 'Liam Smith'}]}},
     {title: `PERSON: Get womans from directory 'tester'`, filter: {state: 'person', filterPath: 'tester', filters: [{index: 'gender', value: 'w'}]}},
+    {title: `PERSON: Get persong with tag 'tag2'`, filter: {state: 'person', filters: [{index: 'tags', value: 'tag2'}]}},
 ]
 
 export function GetObtain(depot: IApp, idx, callback:() => void) {

@@ -16,6 +16,13 @@ import { TOptionsStateIndex } from '../index.env'
 import { Pk } from '../pk'
 import { ToNumber, ToString } from '../z'
 
+type TReindexTree = {
+    level: string,
+    props: string[],
+    value: any,
+    allow: boolean
+}
+
 export class Sqlite {
     readonly schemaver = 1
 
@@ -206,19 +213,21 @@ export class Sqlite {
                 const idxs = row.indexes || this.indexes
                 const json = JSON.parse(row.data)
                 idxs.forEach(index => {
-                    //TODO create tree
-                    // const propTree = index.prop.split('.')
-                    // let value = json
-                    // for (let i = 0; i < propTree.length; i++) {
-                    //     if (value === undefined) break
-                    //     value = value[propTree[i]]
-                    // }
+                    const tree: TReindexTree[] = [{level: '', props: index.prop.split('.'), value: json, allow: true}]
+                    this._reindexTree(tree)
+                    tree.filter(f => f.allow).forEach(item => {
+                        if (index.type === 'number') {
+                            indexNumberRows.push({pk: row.pk, prop: index.prop, level: item.level, value: ToNumber(item.value)})
+                        } else if (index.type === 'string') {
+                            indexStringRows.push({pk: row.pk, prop: index.prop, level: item.level, value: ToString(item.value)})
+                        }
+                    })
 
-                    if (index.type === 'number') {
-                        indexNumberRows.push({pk: row.pk, prop: index.prop, level: 'O', value: ToNumber(json[index.prop])})
-                    } else if (index.type === 'string') {
-                        indexStringRows.push({pk: row.pk, prop: index.prop, level: 'O', value: ToString(json[index.prop])})
-                    }
+                    // if (index.type === 'number') {
+                    //     indexNumberRows.push({pk: row.pk, prop: index.prop, level: 'O', value: ToNumber(json[index.prop])})
+                    // } else if (index.type === 'string') {
+                    //     indexStringRows.push({pk: row.pk, prop: index.prop, level: 'O', value: ToString(json[index.prop])})
+                    // }
                 })
             } catch (error) {
                 noJsonRows.push({pk: row.pk, prop: 'no_json', value: vv.dateFormat(new Date(), '126')})
@@ -336,5 +345,24 @@ export class Sqlite {
                 this.execDataReindex(callback)
             })
         })
+    }
+
+    private _reindexTree(tree: TReindexTree[]): void {
+        tree.filter(f => f.props.length > 0 && f.value !== undefined && f.allow).forEach(item => {
+            const prop = item.props.shift()
+            const value = item.value[prop]
+            item.allow = false
+            const levelPrefix = item.level.length > 0 ? '.' : ''
+            if (Array.isArray(value)) {
+                tree.push(...value.map((m, i) => { return {level: `${item.level}${levelPrefix}A:${i}`, props: [...item.props], value: m, allow: true} }))
+            } else {
+                tree.push({level: `${item.level}${levelPrefix}S`, props: [...item.props], value: value, allow: true})
+            }
+        })
+        if (tree.some(f => f.props.length > 0 && f.value !== undefined && f.allow)) {
+            this._reindexTree(tree)
+        } else {
+            return
+        }
     }
 }

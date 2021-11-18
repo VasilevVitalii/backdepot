@@ -2,7 +2,6 @@ import * as path from 'path'
 import * as fs from 'fs-extra'
 import { exampleFilterObtain, GetObtain, PrepareData } from "./data"
 import { Create as DepotCreate } from '../src/index'
-import { TestTree } from './testtree'
 
 export type TPerson = {
     name: string,
@@ -21,9 +20,6 @@ export type TTicket = {
         deadline: Date,
     }
 }
-
-TestTree()
-process.exit()
 
 function debugLevel(): ('off' | 'debug' | 'trace') {return 'debug'}
 
