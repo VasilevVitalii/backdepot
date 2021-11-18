@@ -1,6 +1,6 @@
 import * as path from 'path'
 import * as fs from 'fs-extra'
-import { exampleFilterObtain, GetObtain, PrepareData } from "./data"
+import { exampleFilterObtain, exampleFilterQuery, GetObtain, GetQuery, PrepareData } from "./data"
 import { Create as DepotCreate } from '../src/index'
 
 export type TPerson = {
@@ -62,6 +62,11 @@ depot.callback.onStateComplete(() => {
     GetObtain(depot, 0, () => {
         exampleFilterObtain.forEach(item => {
             console.log(item)
+        })
+        GetQuery(depot, 0, () => {
+            exampleFilterQuery.forEach(item => {
+                console.log(item)
+            })
         })
     })
 })

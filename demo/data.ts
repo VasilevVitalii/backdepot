@@ -48,14 +48,26 @@ type TFilter<T> = {
 }
 
 type TFilterObtain = TFilter<TypeChannelStateFilterObtain>
+type TFilterQuery = TFilter<TypeChannelStateFilterQuery>
 
 export const exampleFilterObtain: TFilterObtain[] = [
-    {title: `PERSON: Get all persons`, filter: {state: 'person'}},
-    {title: `PERSON: Get persons from directory 'coder'`, filter: {state: 'person', filterPath: 'coder'}},
-    {title: `PERSON: Get person from file 'coder/person1.json'`, filter: {state: 'person', filterPath: 'coder', filterFile: 'person1.json'}},
-    {title: `PERSON: Get person with name 'Liam Smith'`, filter: {state: 'person', filters: [{index: 'name', value: 'Liam Smith'}]}},
-    {title: `PERSON: Get womans from directory 'tester'`, filter: {state: 'person', filterPath: 'tester', filters: [{index: 'gender', value: 'w'}]}},
-    {title: `PERSON: Get persong with tag 'tag2'`, filter: {state: 'person', filters: [{index: 'tags', value: 'tag2'}]}},
+    {title: `OBTAIN - PERSON: Get all persons`, filter: {state: 'person'}},
+    {title: `OBTAIN - PERSON: Get persons from directory 'coder'`, filter: {state: 'person', filterPath: 'coder'}},
+    {title: `OBTAIN - PERSON: Get person from file 'coder/person1.json'`, filter: {state: 'person', filterPath: 'coder', filterFile: 'person1.json'}},
+    {title: `OBTAIN - PERSON: Get person with name 'Liam Smith'`, filter: {state: 'person', filters: [{index: 'name', value: 'Liam Smith'}]}},
+    {title: `OBTAIN - PERSON: Get womans from directory 'tester'`, filter: {state: 'person', filterPath: 'tester', filters: [{index: 'gender', value: 'w'}]}},
+    {title: `OBTAIN - PERSON: Get person with tag 'tag2'`, filter: {state: 'person', filters: [{index: 'tags', value: 'tag2'}]}},
+    {title: `OBTAIN - TICKET: Get tikets where 'Alexander Miller' in assegnee`, filter: {state: 'ticket', filters: [{index: 'assegnee.name', value: 'Alexander Miller'}]}},
+]
+
+export const exampleFilterQuery: TFilterQuery[] = [
+    {title: `QUERY - PERSON: Get all persons`, filter: {state: 'person'}},
+    {title: `QUERY - PERSON: Get persons from directory 'coder'`, filter: {state: 'person', filterGlobal: `$path = 'coder'`}},
+    {title: `QUERY - PERSON: Get person from file 'coder/person1.json'`, filter: {state: 'person', filterGlobal: `$path = 'coder' AND $file = 'person1.json'`}},
+    {title: `QUERY - PERSON: Get person with name 'Liam Smith'`, filter: {state: 'person', filters: [{index: 'name', query: `$value = 'Liam Smith'`}]}},
+    {title: `QUERY - PERSON: Get womans from directory 'tester'`, filter: {state: 'person', filterGlobal: `$path = 'tester'`, filters: [{index: 'gender', query: `$value = 'w'`}]}},
+    {title: `QUERY - PERSON: Get person with tag 'tag2'`, filter: {state: 'person', filters: [{index: 'tags', query: `$value = 'tag2'`}]}},
+    {title: `QUERY - TICKET: Get tikets where 'Alexander Miller' in assegnee`, filter: {state: 'ticket', filters: [{index: 'assegnee.name', query: `$value = 'Alexander Miller'`}]}},
 ]
 
 export function GetObtain(depot: IApp, idx, callback:() => void) {
@@ -74,4 +86,18 @@ export function GetObtain(depot: IApp, idx, callback:() => void) {
     })
 }
 
-
+export function GetQuery(depot: IApp, idx, callback:() => void) {
+    if (idx >= exampleFilterQuery.length) {
+        callback()
+        return
+    }
+    const f = exampleFilterQuery[idx]
+    depot.get.query([f.filter], (error, rows) => {
+        if (error) {
+            console.warn(error)
+        }
+        f.result = rows
+        idx++
+        GetQuery(depot, idx, callback)
+    })
+}
