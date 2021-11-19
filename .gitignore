@@ -1,7 +1,5 @@
 node_modules
 dist
-demo/data
-demo/map
 test/*.json
 test/log
 test/test-states

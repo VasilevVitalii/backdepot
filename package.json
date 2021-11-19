@@ -1,6 +1,6 @@
 {
     "name": "backdepot",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "backend storage",
     "main": "dist/src/index.js",
     "scripts": {

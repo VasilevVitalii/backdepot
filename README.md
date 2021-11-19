@@ -1,41 +1,45 @@
 # backdepot for backend nodejs
+## Features
 State storage
 * Embedded
 * With parallel access
 * File-oriented
-
-## 1. Idea
-Folder **demo** has demo
-1.1. I have two array, for example, persons and tickets:
-```json
-person
-{
-    "name": "Lucas Wilson",
-    "email": "lucas.wilson@mailserver.com"
-}
-
-ticket
-{
-    "id": 1,
-    "author": "Lucas Wilson",
-    "assegnee": [
-        "Olivia Smith",
-        "Benjamin Brown"
-    ],
-    "task": "create unit tests for our app",
-    "deadlineDate": "2021-11-16"
-}
-```
-1.2. This data storage in two directories. One file - one person or one ticket.
-Read and edit this directories is carried out both from many app via backdepot, and from many other app without using backdepot.
-App with backdepot watch two directories, contains actual state, provides easy access to read data, provides ability for edit data.
-
-## Features
-
+## Demo in folder **demo**
 ## License
-
+**MIT**
 ## Install
 ```
-npm i XXX
+npm i backdepot
 ```
 ## Example
+```ts
+import { Create as DepotCreate } from 'backdepot'
+const depot = DepotCreate({
+    pathMap: './map',  //OR 'MEMORY'
+    pathData: undefined,
+    states: [
+        {name: 'person', pathData: './data/person', indexes: [
+            {type: 'string', prop: 'name'},
+            {type: 'number', prop: 'age'},
+            {type: 'string', prop: 'gender'},
+            {type: 'string', prop: 'tags'},
+        ]},
+        {name: 'ticket', pathData: './data/ticket', indexes: [
+            {type: 'number', prop: 'id'},
+            {type: 'string', prop: 'author'},
+            {type: 'string', prop: 'assegnee.name'},
+            {type: 'string', prop: 'history.create'},
+            {type: 'string', prop: 'history.deadline'},
+        ]},
+    ]
+})
+depot.callback.onError(error => {console.warn(error)})
+depot.callback.onDebug(debug => {console.log(debug)})
+depot.callback.onTrace(trace => {console.log(trace)})}
+depot.callback.onStateComplete(() => {
+    console.log('depot ready to work')
+})
+depot.start()
+```
+
+
