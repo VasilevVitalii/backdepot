@@ -212,41 +212,31 @@ if (pp) {
                     pp.postMessage(message)
                 } : undefined,
                 rows => {
-                    if (env.parent.callback.isStateChange === true) {
-
-                        env.stateSet.filter(f => !f.error).forEach(set => {
-                            set.rows.filter(f => f.action === 'delete' && !f.isWatched && f.state.name === stateEnv.name).forEach(row => {
-                                if (rows.some(f => vv.equal(f.path, row.path) && vv.equal(f.file, row.file))) {
-                                    row.isWatched = true
-                                }
-                            })
+                    env.stateSet.filter(f => !f.error).forEach(set => {
+                        set.rows.filter(f => f.action === 'delete' && !f.isWatched && f.state.name === stateEnv.name).forEach(row => {
+                            if (rows.some(f => vv.equal(f.path, row.path) && vv.equal(f.file, row.file))) {
+                                row.isWatched = true
+                            }
                         })
+                    })
 
-                        env.stateChanged.push({state: stateEnv.name, action: 'delete', rows: rows })
-                    } else {
-                        env.stateSet.splice(0)
-                    }
+                    env.stateChanged.push({state: stateEnv.name, action: 'delete', rows: rows })
                 },
                 rows => {
-                    if (env.parent.callback.isStateChange === true) {
-
-                        env.stateSet.filter(f => !f.error).forEach(set => {
-                            set.rows.filter(f => f.action === 'insert' && !f.isWatched && f.state.name === stateEnv.name).forEach(row => {
-                                if (rows.some(f => vv.equal(f.path, row.path) && vv.equal(f.file, row.file) && f.data === row.data)) {
-                                    row.isWatched = true
-                                }
-                            })
+                    env.stateSet.filter(f => !f.error).forEach(set => {
+                        set.rows.filter(f => f.action === 'insert' && !f.isWatched && f.state.name === stateEnv.name).forEach(row => {
+                            if (rows.some(f => vv.equal(f.path, row.path) && vv.equal(f.file, row.file) && f.data === row.data)) {
+                                row.isWatched = true
+                            }
                         })
+                    })
 
-                        const typedata = new TypeDataHandler(stateEnv.typeData, stateEnv.typeDataShowcase)
-                        rows.forEach(row => {
-                            row.data =  typedata.loaddata(row.data as string)
-                        })
+                    const typedata = new TypeDataHandler(stateEnv.typeData, stateEnv.typeDataShowcase)
+                    rows.forEach(row => {
+                        row.data =  typedata.loaddata(row.data as string)
+                    })
 
-                        env.stateChanged.push({state: stateEnv.name, action: 'insert', rows: rows})
-                    } else {
-                        env.stateSet.splice(0)
-                    }
+                    env.stateChanged.push({state: stateEnv.name, action: 'insert', rows: rows})
                 }
             ))
         } catch (error) {

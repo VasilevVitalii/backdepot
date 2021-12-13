@@ -58,14 +58,32 @@ if (debugLevel() === 'debug' || debugLevel() === 'trace') {
 if (debugLevel() === 'trace') {
     depot.callback.onTrace(trace => {console.log(trace)})
 }
+
+let persons = []
+let tickets = []
+
 depot.callback.onStateComplete(() => {
-    GetObtain(depot, 0, () => {
-        exampleFilterObtain.forEach(item => {
-            console.log(item)
-        })
-        GetQuery(depot, 0, () => {
-            exampleFilterQuery.forEach(item => {
+    //load all data
+    depot.get.obtain([{state: 'person'}, {state: 'ticket'}], (error, loadedAll) => {
+        persons = loadedAll.find(f => f.state === 'person').rows
+        tickets = loadedAll.find(f => f.state === 'ticket').rows
+
+        //demo type 1 load filtered data
+        GetObtain(depot, 0, () => {
+            exampleFilterObtain.forEach(item => {
                 console.log(item)
+            })
+            //demo type 2 load filtered data
+            GetQuery(depot, 0, () => {
+                exampleFilterQuery.forEach(item => {
+                    console.log(item)
+                })
+
+                // demo delete two persons
+                depot.set([{action: 'delete', state: 'person', rows: persons.slice(0, 2)}], () => {
+                    console.log('deleted')
+                })
+                //console.log(persons)
             })
         })
     })
@@ -73,6 +91,10 @@ depot.callback.onStateComplete(() => {
 
 depot.start()
 
+// setTimeout(() => {
+//     console.log(persons)
+//     //depot.set([{action: 'delete', state: 'person', rows: }])
+// }, 1000)
 
 
 

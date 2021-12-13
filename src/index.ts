@@ -23,7 +23,7 @@ export interface IApp {
         /** load data from states with injected sql in filter */
         query(filter: TChannelStateFilterQuery[], callback: TCallbackFunctionGet): void,
     },
-    set(sets: TStateRowChange[], callback: (key: string) => void): void,
+    set(sets: TStateRowChange[], callback: (key: string, error: Error) => void): void,
     callback: {
         /** for getting errors that occur when the library is running */
         //on_error: (FunctionOnError) => void,
@@ -49,6 +49,8 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
         let callbackTrace = undefined as any as TCallbackFunctionOnTrace
         let callbackStateComplete = undefined as any as TCallbackFunctionOnStateComplete
         let callbackStateChange = undefined as any as TCallbackFunctionOnStateChange
+        const callbackStateSets = [] as {key: string, callback: (key: string, error: Error) => void}[]
+
         let worker: any
         const channelQueueLoadStates = [] as {key: string, callback: TCallbackFunctionGet}[]
 
@@ -83,8 +85,21 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                         const channelItem = channelQueueLoadStates.splice(channelQueueIdx, 1)
                         if (!channelItem || channelItem.length <= 0) return
                         channelItem[0].callback(workerInfo.error, workerInfo.rows)
-                    } else if (workerInfo.type === 'state_change' && callbackStateChange ) {
-                        setTimeout(() => { callbackStateChange(workerInfo.rows, workerInfo.sets) }, 0)
+                    } else if (workerInfo.type === 'state_change' ) {
+                        if (workerInfo.sets) {
+                            for (let i = 0; i < workerInfo.sets.length; i++) {
+                                const item = workerInfo.sets[i]
+                                const findIdx = callbackStateSets.findIndex(f => f.key === item.key)
+                                if (findIdx >= 0) {
+                                    callbackStateSets[findIdx].callback(item.key, item.error)
+                                    callbackStateSets.splice(findIdx, 1)
+                                    break
+                                }
+                            }
+                        }
+                        if (callbackStateChange) {
+                            setTimeout(() => { callbackStateChange(workerInfo.rows, workerInfo.sets) }, 0)
+                        }
                     }
                 })
             },
@@ -125,9 +140,9 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     worker.postMessage(message)
                 },
             },
-            set: (sets: TStateRowChange[], callback: (key: string | undefined) => void) => {
+            set: (sets: TStateRowChange[], callback: (key: string, error: Error) => void) => {
                 if (!worker || !sets || sets.length <= 0) {
-                    if (callback) callback(undefined)
+                    if (callback) callback(undefined, undefined)
                     return
                 }
 
@@ -140,7 +155,9 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                 }
                 worker.postMessage(message)
 
-                callback(key)
+                callbackStateSets.push({key: key, callback: callback})
+
+                //callback(key)
             },
             callback: {
                 onError (callback): void {
@@ -160,7 +177,6 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     callbackStateComplete = callback
                 },
                 onStateChange (callback): void {
-                    env.callback.isStateChange = true
                     callbackStateChange = callback
                 }
             }

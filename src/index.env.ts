@@ -99,7 +99,6 @@ export class Env {
         allowDebug: boolean,
         allowTrace: boolean,
         isStateComplete: boolean,
-        isStateChange: boolean
     }
 
     constructor(options: TOptions) {
@@ -107,8 +106,7 @@ export class Env {
             allowError: false,
             allowDebug: false,
             allowTrace: false,
-            isStateComplete: false,
-            isStateChange: false
+            isStateComplete: false
         }
 
         this.pathData = path.resolve(z.Dir(options.pathData))
