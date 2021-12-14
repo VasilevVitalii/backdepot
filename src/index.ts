@@ -105,8 +105,12 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
             },
             get: {
                 obtain: (filter: TChannelStateFilterObtain[], callback: TCallbackFunctionGet) => {
-                    if (!worker || !filter || filter.length <= 0) {
-                        callback(new Error('worker is not started or filter is empty'), [])
+                    if (!worker) {
+                        callback(new Error('worker is not started'), [])
+                        return
+                    }
+                    if (!filter || filter.length <= 0) {
+                        callback(undefined, [])
                         return
                     }
 
@@ -121,11 +125,12 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     worker.postMessage(message)
                 },
                 query: (filter: TChannelStateFilterQuery[], callback: TCallbackFunctionGet) => {
-                    if (!callback) {
+                    if (!worker) {
+                        callback(new Error('worker is not started'), [])
                         return
                     }
-                    if (!worker || !filter || filter.length <= 0) {
-                        callback(new Error('worker is not started or filter is empty'), [])
+                    if (!filter || filter.length <= 0) {
+                        callback(undefined, [])
                         return
                     }
 
