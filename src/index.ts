@@ -23,7 +23,7 @@ export interface IApp {
         /** load data from states with injected sql in filter */
         query(filter: TChannelStateFilterQuery[], callback: TCallbackFunctionGet): void,
     },
-    set(sets: TStateRowChange[], callback: (key: string, error: Error) => void): void,
+    set(sets: TStateRowChange[], callback?: (key: string, error: Error) => void): void,
     callback: {
         /** for getting errors that occur when the library is running */
         //on_error: (FunctionOnError) => void,
@@ -140,13 +140,16 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     worker.postMessage(message)
                 },
             },
-            set: (sets: TStateRowChange[], callback: (key: string, error: Error) => void) => {
-                if (!worker || !sets || sets.length <= 0) {
+            set: (sets: TStateRowChange[], callback?: (key: string, error: Error) => void) => {
+                if (!worker || !sets || sets.length <= 0 || sets.every(f => f.rows.length <= 0)) {
                     if (callback) callback(undefined, undefined)
                     return
                 }
-
                 const key = `${vv.guid()}${vv.guid()}${vv.dateFormat(new Date(), 'yyyymmddhhmissmsec')}`
+
+                if (callback) {
+                    callbackStateSets.push({key: key, callback: callback})
+                }
 
                 const message: TChannelWorkerTo = {
                     type: 'set',
@@ -154,10 +157,6 @@ export function Create(options: TOptions, callback?: (error: Error | undefined) 
                     sets: sets
                 }
                 worker.postMessage(message)
-
-                callbackStateSets.push({key: key, callback: callback})
-
-                //callback(key)
             },
             callback: {
                 onError (callback): void {
