@@ -60,7 +60,7 @@ export function UpsertBig(state: State, allowCallbackChangeInsert: boolean, file
         upsertQueriesCountForMessage: 0
     }
 
-    state.callbackError(`queue upsert big: start ${readFilesThreadCount} threads for read files`)
+    state.callbackDebug(`queue upsert big: start ${readFilesThreadCount} threads for read files`)
     for (let threadIdx = 0; threadIdx < readFilesThreadCount; threadIdx++) {
         const readFilesThread = (
                 threadIdx + 1 === readFilesThreadCount ?
