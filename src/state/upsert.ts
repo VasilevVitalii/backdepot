@@ -1,7 +1,7 @@
 import { State } from "./index"
 import { FsStat } from '../fsstat'
 import { ReadFiles } from '../z'
-import { FromFile } from '../pk'
+import { FromFile, Pk } from '../pk'
 import { TRow as Row_Data} from '../sqlite/table.data'
 
 export function UpsertSmall(state: State, allowCallbackChangeInsert: boolean, fileRows: {fullFileName: string, fsstat: FsStat}[], callback: (success: boolean) => void): void {
@@ -37,112 +37,199 @@ export function UpsertSmall(state: State, allowCallbackChangeInsert: boolean, fi
 }
 
 export function UpsertBig(state: State, allowCallbackChangeInsert: boolean, fileRows: {fullFileName: string, fsstat: FsStat}[], callback: (success: boolean) => void): void {
-    let readFilesThreadCount = 2
-    let upsertDataTimeout = 500
+    let countFilesPerThread = 3
+    let countWorkedThread = 3
+    const process = {
+        countWorkedThreads: 0,
+        hasError: false,
+        fileRowsComplite: [] as Row_Data[],
+    }
 
     if (fileRows.length > 1000) {
-        readFilesThreadCount = 20
-        upsertDataTimeout = 3000
+        countFilesPerThread = 20
+        countWorkedThread = 20
     } else if (fileRows.length > 100) {
-        readFilesThreadCount = 10
-        upsertDataTimeout = 2000
+        countFilesPerThread = 10
+        countWorkedThread = 10
     } else if (fileRows.length > 50) {
-        readFilesThreadCount = 5
-        upsertDataTimeout = 1000
-    }
-    const readFilesFilesInThread = Math.ceil(fileRows.length / readFilesThreadCount)
-    const processState = {
-        hasError: false,
-        readFilesRows: [] as Row_Data[],
-        readFilesThreadCount: readFilesThreadCount,
-        readFilesCountForMessage: 0,
-        upsertMapsCountForMessage: 0,
-        upsertQueriesCountForMessage: 0
+        countFilesPerThread = 5
+        countWorkedThread = 10
     }
 
-    state.callbackDebug(`queue upsert big: start ${readFilesThreadCount} threads for read files`)
-    for (let threadIdx = 0; threadIdx < readFilesThreadCount; threadIdx++) {
-        const readFilesThread = (
-                threadIdx + 1 === readFilesThreadCount ?
-                fileRows.slice(threadIdx * readFilesFilesInThread) :
-                fileRows.slice(threadIdx * readFilesFilesInThread, (threadIdx + 1) * readFilesFilesInThread)
-            )
-        let readFilesTimer = setTimeout(function tick() {
-            if (processState.hasError) {
-                processState.readFilesThreadCount--
-                return
-            }
-            if (processState.readFilesRows.length > 500) {
-                readFilesTimer = setTimeout(tick, upsertDataTimeout)
-                return
-            }
-            const readFilesChunk = readFilesThread.splice(0, 5).map(m => { return {...m, data: undefined as string | undefined, pk: FromFile(m.fullFileName, state.pathData) }})
-            if (readFilesChunk.length <= 0) {
-                processState.readFilesThreadCount--
-                return
-            }
-            ReadFiles(readFilesChunk, 0, error => {
-                if (error) {
-                    processState.hasError = true
-                    state.callbackError(`queue upsert big: read files "${error.message}"`)
-                    processState.readFilesThreadCount--
-                    return
-                }
+    state.callbackDebug(`queue upsert big: start ${countWorkedThread} threads for read files, each thread has max ${countFilesPerThread} files`)
 
-                processState.readFilesRows.push(...readFilesChunk)
-                processState.readFilesThreadCount = processState.readFilesThreadCount + readFilesChunk.length
-                if (processState.readFilesThreadCount > 1000 ) {
-                    state.callbackDebug (`queue upsert big: read portion files "${processState.readFilesThreadCount}" `)
-                    processState.readFilesThreadCount = 0
-                }
+    const threadStart = () => {
+        if (fileRows.length <= 0 || process.hasError) return
+        process.countWorkedThreads++
+        const readFileResult = fileRows.splice(0, fileRows.length > countFilesPerThread ? countFilesPerThread : fileRows.length).map(m => {
+            return {
+                ...m,
+                data: undefined as string | undefined
+            }
+        })
+        ReadFiles(readFileResult, 0, error => {
+            if (error) {
+                process.hasError = true
+            }
+            process.fileRowsComplite.push(...readFileResult.map(m => {return {
+                pk: FromFile(m.fullFileName, state.pathData),
+                fsstat: m.fsstat,
+                data: m.data
+            }}))
+            threadStart()
+            process.countWorkedThreads--
+        })
+    }
 
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                readFilesTimer = setTimeout(tick, 0)
-            })
-        }, 0)
+    for (let i = 0; i < countWorkedThread; i++) {
+        threadStart()
     }
 
     let uploadTimer = setTimeout(function tick() {
-        if (processState.hasError) {
+        if (process.hasError) {
             callback(false)
             return
         }
-        const uploadRows = processState.readFilesRows.splice(0, processState.readFilesRows.length)
+        const uploadRows = process.fileRowsComplite.splice(0, process.fileRowsComplite.length)
         if (uploadRows.length <= 0) {
-            if (processState.readFilesThreadCount <= 0) {
-                callback(!processState.hasError)
+            if (process.countWorkedThreads <= 0) {
+                callback(!process.hasError)
             } else {
-                uploadTimer = setTimeout(tick, upsertDataTimeout)
+                uploadTimer = setTimeout(tick, 1000)
             }
             return
         }
         state.sqlite.execDataUpsertIndex(uploadRows, error => {
             if (error) {
                 state.callbackError(`queue upsert big: upsert index "${error.message}"`)
-                processState.hasError = true
+                process.hasError
                 callback(false)
                 return
             }
             state.sqlite.orm.data.upsert(uploadRows, error => {
                 if (error) {
                     state.callbackError(`queue upsert big: upsert data "${error.message}"`)
-                    processState.hasError = true
+                    process.hasError
                     callback(false)
                     return
-                }
-                processState.upsertQueriesCountForMessage++
-                processState.upsertMapsCountForMessage = processState.upsertMapsCountForMessage + uploadRows.length
-                if (processState.upsertMapsCountForMessage > 1000 ) {
-                    state.callbackDebug(`queue upsert big: upsert portion maps "${processState.upsertMapsCountForMessage}" (${processState.upsertQueriesCountForMessage} queries) `)
-                    processState.upsertMapsCountForMessage = 0
-                    processState.upsertQueriesCountForMessage = 0
                 }
                 if (allowCallbackChangeInsert) {
                     state.callbackChangeInsert(uploadRows.map(m => { return {path: m.pk.path, file: m.pk.file, data: m.data} }))
                 }
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                uploadTimer = setTimeout(tick, upsertDataTimeout)
+                uploadTimer = setTimeout(tick, 1000)
             })
         })
     })
 }
+
+// export function UpsertBig(state: State, allowCallbackChangeInsert: boolean, fileRows: {fullFileName: string, fsstat: FsStat}[], callback: (success: boolean) => void): void {
+//     let readFilesThreadCount = 2
+//     let upsertDataTimeout = 500
+
+//     if (fileRows.length > 1000) {
+//         readFilesThreadCount = 20
+//         upsertDataTimeout = 3000
+//     } else if (fileRows.length > 100) {
+//         readFilesThreadCount = 10
+//         upsertDataTimeout = 2000
+//     } else if (fileRows.length > 50) {
+//         readFilesThreadCount = 5
+//         upsertDataTimeout = 1000
+//     }
+//     const readFilesFilesInThread = Math.ceil(fileRows.length / readFilesThreadCount)
+//     const processState = {
+//         hasError: false,
+//         readFilesRows: [] as Row_Data[],
+//         readFilesThreadCount: readFilesThreadCount,
+//         readFilesCountForMessage: 0,
+//         upsertMapsCountForMessage: 0,
+//         upsertQueriesCountForMessage: 0
+//     }
+
+//     state.callbackDebug(`queue upsert big: start ${readFilesThreadCount} threads for read files`)
+//     for (let threadIdx = 0; threadIdx < readFilesThreadCount; threadIdx++) {
+//         const readFilesThread = (
+//                 threadIdx + 1 === readFilesThreadCount ?
+//                 fileRows.slice(threadIdx * readFilesFilesInThread) :
+//                 fileRows.slice(threadIdx * readFilesFilesInThread, (threadIdx + 1) * readFilesFilesInThread)
+//             )
+//         let readFilesTimer = setTimeout(function tick() {
+//             if (processState.hasError) {
+//                 processState.readFilesThreadCount--
+//                 return
+//             }
+//             if (processState.readFilesRows.length > 500) {
+//                 readFilesTimer = setTimeout(tick, upsertDataTimeout)
+//                 return
+//             }
+//             const readFilesChunk = readFilesThread.splice(0, 5).map(m => { return {...m, data: undefined as string | undefined, pk: FromFile(m.fullFileName, state.pathData) }})
+//             if (readFilesChunk.length <= 0) {
+//                 processState.readFilesThreadCount--
+//                 return
+//             }
+//             ReadFiles(readFilesChunk, 0, error => {
+//                 if (error) {
+//                     processState.hasError = true
+//                     state.callbackError(`queue upsert big: read files "${error.message}"`)
+//                     processState.readFilesThreadCount--
+//                     return
+//                 }
+
+//                 processState.readFilesRows.push(...readFilesChunk)
+//                 processState.readFilesThreadCount = processState.readFilesThreadCount + readFilesChunk.length
+//                 if (processState.readFilesThreadCount > 1000 ) {
+//                     state.callbackDebug (`queue upsert big: read portion files "${processState.readFilesThreadCount}" `)
+//                     processState.readFilesThreadCount = 0
+//                 }
+
+//                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//                 readFilesTimer = setTimeout(tick, 0)
+//             })
+//         }, 0)
+//     }
+
+//     let uploadTimer = setTimeout(function tick() {
+//         if (processState.hasError) {
+//             callback(false)
+//             return
+//         }
+//         const uploadRows = processState.readFilesRows.splice(0, processState.readFilesRows.length)
+//         if (uploadRows.length <= 0) {
+//             if (processState.readFilesThreadCount <= 0) {
+//                 callback(!processState.hasError)
+//             } else {
+//                 uploadTimer = setTimeout(tick, upsertDataTimeout)
+//             }
+//             return
+//         }
+//         state.sqlite.execDataUpsertIndex(uploadRows, error => {
+//             if (error) {
+//                 state.callbackError(`queue upsert big: upsert index "${error.message}"`)
+//                 processState.hasError = true
+//                 callback(false)
+//                 return
+//             }
+//             state.sqlite.orm.data.upsert(uploadRows, error => {
+//                 if (error) {
+//                     state.callbackError(`queue upsert big: upsert data "${error.message}"`)
+//                     processState.hasError = true
+//                     callback(false)
+//                     return
+//                 }
+//                 processState.upsertQueriesCountForMessage++
+//                 processState.upsertMapsCountForMessage = processState.upsertMapsCountForMessage + uploadRows.length
+//                 if (processState.upsertMapsCountForMessage > 1000 ) {
+//                     state.callbackDebug(`queue upsert big: upsert portion maps "${processState.upsertMapsCountForMessage}" (${processState.upsertQueriesCountForMessage} queries) `)
+//                     processState.upsertMapsCountForMessage = 0
+//                     processState.upsertQueriesCountForMessage = 0
+//                 }
+//                 if (allowCallbackChangeInsert) {
+//                     state.callbackChangeInsert(uploadRows.map(m => { return {path: m.pk.path, file: m.pk.file, data: m.data} }))
+//                 }
+//                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//                 uploadTimer = setTimeout(tick, upsertDataTimeout)
+//             })
+//         })
+//     })
+// }
